@@ -1,8 +1,26 @@
+using BankingApp.Infrastructure.Data;
+using BankingApp.Infrastructure.Repositories;
+using BankingApp.Application.Services;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+// Register DbContext
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+builder.Services.AddDbContext<BankingDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// Register repositories
+builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+builder.Services.AddScoped<ILedgerRepository, LedgerRepository>();
+
+// Register services
+builder.Services.AddScoped<ITransferService, TransferService>();
 
 var app = builder.Build();
 
