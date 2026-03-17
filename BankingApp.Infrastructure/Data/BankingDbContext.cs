@@ -5,7 +5,13 @@ namespace BankingApp.Infrastructure.Data;
 
 public class BankingDbContext : DbContext
 {
-    private const string SqlGetUtcDateFunction = "GETUTCDATE()";
+    /// <summary>
+    /// SQLite CURRENT_TIMESTAMP provides second-resolution precision.
+    /// For microsecond precision and deterministic ordering in high-frequency transactions,
+    /// CreatedAt is set application-side using DateTime.UtcNow (100-nanosecond precision),
+    /// with secondary ordering by ID for transactions in the same second.
+    /// </summary>
+    private const string SqlGetUtcDateFunction = "CURRENT_TIMESTAMP";
 
     public BankingDbContext(DbContextOptions<BankingDbContext> options) : base(options)
     {

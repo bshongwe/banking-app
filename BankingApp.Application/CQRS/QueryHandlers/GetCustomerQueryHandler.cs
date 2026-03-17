@@ -1,4 +1,5 @@
 using BankingApp.Infrastructure.Data;
+using BankingApp.Application.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace BankingApp.Application.CQRS.QueryHandlers;
@@ -12,7 +13,7 @@ public class GetCustomerQueryHandler
         _context = context;
     }
 
-    public async Task<dynamic?> HandleAsync(Queries.GetCustomerQuery query)
+    public async Task<dynamic> HandleAsync(Queries.GetCustomerQuery query)
     {
         // Using LINQ to fetch customer with their accounts
         var customer = await _context.Customers
@@ -35,7 +36,7 @@ public class GetCustomerQueryHandler
             .FirstOrDefaultAsync();
 
         if (customer == null)
-            throw new InvalidOperationException($"Customer {query.CustomerId} not found.");
+            throw new ResourceNotFoundException("Customer", query.CustomerId);
 
         return customer;
     }
