@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using BankingApp.Domain.Entities;
+using BankingApp.Infrastructure.Data;
 
 namespace BankingApp.Infrastructure.Repositories;
 
