@@ -1,6 +1,8 @@
 using BankingApp.Domain.Entities;
 using BankingApp.Infrastructure.Data;
+using BankingApp.Application.Exceptions;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 
 namespace BankingApp.Application.CQRS.CommandHandlers;
 
@@ -38,8 +40,16 @@ public class CreateCustomerCommandHandler
             CreatedAt = DateTime.UtcNow
         };
 
-        await _context.Customers.AddAsync(customer);
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.Customers.AddAsync(customer);
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("UNIQUE constraint failed", StringComparison.OrdinalIgnoreCase) ?? false)
+        {
+            // Handle unique constraint violation on Email
+            throw new DuplicateEmailException(command.Email);
+        }
 
         return customer;
     }

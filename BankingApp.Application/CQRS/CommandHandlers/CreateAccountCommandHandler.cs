@@ -2,6 +2,7 @@ using BankingApp.Domain.Entities;
 using BankingApp.Infrastructure.Repositories;
 using BankingApp.Application.UnitOfWork;
 using BankingApp.Application.Exceptions;
+using BankingApp.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace BankingApp.Application.CQRS.CommandHandlers;
@@ -11,15 +12,18 @@ public class CreateAccountCommandHandler
     private readonly IAccountRepository _accountRepository;
     private readonly ILedgerRepository _ledgerRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly BankingDbContext _context;
 
     public CreateAccountCommandHandler(
         IAccountRepository accountRepository,
         ILedgerRepository ledgerRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        BankingDbContext context)
     {
         _accountRepository = accountRepository;
         _ledgerRepository = ledgerRepository;
         _unitOfWork = unitOfWork;
+        _context = context;
     }
 
     public async Task<Account> HandleAsync(Commands.CreateAccountCommand command)
@@ -32,6 +36,11 @@ public class CreateAccountCommandHandler
 
         if (command.InitialBalance < 0)
             throw new ArgumentException("Initial balance cannot be negative.");
+
+        // Pre-check: Validate customer exists
+        var customerExists = await _context.Customers.AnyAsync(c => c.Id == command.CustomerId);
+        if (!customerExists)
+            throw new ResourceNotFoundException("Customer", command.CustomerId);
 
         // Begin transaction to ensure account and initial balance are persisted atomically
         await _unitOfWork.BeginTransactionAsync();
@@ -87,3 +96,4 @@ public class CreateAccountCommandHandler
         }
     }
 }
+

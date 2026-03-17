@@ -1,4 +1,5 @@
 using BankingApp.Infrastructure.Data;
+using BankingApp.Application.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace BankingApp.Application.CQRS.QueryHandlers;
@@ -29,7 +30,7 @@ public class GetAccountDetailQueryHandler
             .FirstOrDefaultAsync();
 
         if (account == null)
-            throw new InvalidOperationException($"Account {query.AccountId} not found.");
+            throw new ResourceNotFoundException("Account", query.AccountId);
 
         return account;
     }

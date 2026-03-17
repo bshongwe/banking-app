@@ -1,4 +1,5 @@
 using BankingApp.Infrastructure.Repositories;
+using BankingApp.Application.Exceptions;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,7 +19,7 @@ public class GetAccountBalanceQueryHandler
     {
         var account = await _accountRepository.GetByIdAsync(query.AccountId);
         if (account == null)
-            throw new InvalidOperationException($"Account {query.AccountId} not found.");
+            throw new ResourceNotFoundException("Account", query.AccountId);
 
         var balance = await _accountRepository.GetBalanceAsync(query.AccountId);
         return balance;
