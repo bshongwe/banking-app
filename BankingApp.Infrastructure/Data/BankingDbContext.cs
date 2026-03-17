@@ -5,7 +5,7 @@ namespace BankingApp.Infrastructure.Data;
 
 public class BankingDbContext : DbContext
 {
-    private const string SqlGetUtcDateFunction = "GETUTCDATE()";
+    private const string SqlGetUtcDateFunction = "CURRENT_TIMESTAMP";
 
     public BankingDbContext(DbContextOptions<BankingDbContext> options) : base(options)
     {
