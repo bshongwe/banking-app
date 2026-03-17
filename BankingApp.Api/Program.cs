@@ -83,6 +83,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// Enable static files (for API docs HTML)
+app.UseStaticFiles();
+
 // Map controllers
 app.MapControllers();
 
