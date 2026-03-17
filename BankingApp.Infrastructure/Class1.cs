@@ -1,6 +1,2 @@
-﻿namespace BankingApp.Infrastructure;
+﻿// Infrastructure layer contains database context and data access implementations
 
-public class Class1
-{
-
-}
