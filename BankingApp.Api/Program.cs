@@ -80,8 +80,11 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
-
-app.UseHttpsRedirection();
+else
+{
+    // Only use HTTPS redirect in production
+    app.UseHttpsRedirection();
+}
 
 // Enable static files (for API docs HTML)
 app.UseStaticFiles();
