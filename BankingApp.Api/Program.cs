@@ -13,7 +13,35 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddOpenApi();
-builder.Services.AddControllers();
+
+// Configure API Controller behavior and validation error response format
+builder.Services
+    .AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var problemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails
+            {
+                Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+                Title = "One or more validation errors occurred.",
+                Status = Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest,
+                Detail = "See the errors property for details.",
+                Instance = context.HttpContext.Request.Path
+            };
+
+            var errors = context.ModelState
+                .Where(x => x.Value?.Errors.Count > 0)
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToArray() ?? Array.Empty<string>()
+                );
+
+            problemDetails.Extensions["errors"] = errors;
+
+            return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(problemDetails);
+        };
+    });
 
 // Register DbContext
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
