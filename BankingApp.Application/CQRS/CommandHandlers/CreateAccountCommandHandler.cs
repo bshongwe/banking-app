@@ -6,10 +6,14 @@ namespace BankingApp.Application.CQRS.CommandHandlers;
 public class CreateAccountCommandHandler
 {
     private readonly IAccountRepository _accountRepository;
+    private readonly ILedgerRepository _ledgerRepository;
 
-    public CreateAccountCommandHandler(IAccountRepository accountRepository)
+    public CreateAccountCommandHandler(
+        IAccountRepository accountRepository,
+        ILedgerRepository ledgerRepository)
     {
         _accountRepository = accountRepository;
+        _ledgerRepository = ledgerRepository;
     }
 
     public async Task<Account> HandleAsync(Commands.CreateAccountCommand command)
@@ -36,6 +40,22 @@ public class CreateAccountCommandHandler
 
         await _accountRepository.AddAsync(account);
         await _accountRepository.SaveChangesAsync();
+
+        // If initial balance is provided, create a ledger entry
+        if (command.InitialBalance > 0)
+        {
+            var initialBalanceEntry = new LedgerEntry
+            {
+                Id = Guid.NewGuid(),
+                AccountId = account.Id,
+                Amount = command.InitialBalance,
+                EntryType = "Credit",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _ledgerRepository.AddAsync(initialBalanceEntry);
+            await _ledgerRepository.SaveChangesAsync();
+        }
 
         return account;
     }
