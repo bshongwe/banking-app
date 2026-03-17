@@ -5,6 +5,8 @@ namespace BankingApp.Infrastructure.Data;
 
 public class BankingDbContext : DbContext
 {
+    private const string SqlGetUtcDateFunction = "GETUTCDATE()";
+
     public BankingDbContext(DbContextOptions<BankingDbContext> options) : base(options)
     {
     }
@@ -26,7 +28,7 @@ public class BankingDbContext : DbContext
             entity.Property(e => e.LastName).HasMaxLength(100).IsRequired();
             entity.Property(e => e.Email).HasMaxLength(200).IsRequired();
             entity.HasIndex(e => e.Email).IsUnique();
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql(SqlGetUtcDateFunction);
         });
 
         // Configure Account
@@ -36,7 +38,7 @@ public class BankingDbContext : DbContext
             entity.Property(e => e.AccountNumber).HasMaxLength(20).IsRequired();
             entity.HasIndex(e => e.AccountNumber).IsUnique();
             entity.Property(e => e.Currency).HasMaxLength(3).HasDefaultValue("USD");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql(SqlGetUtcDateFunction);
             
             entity.HasOne(e => e.Customer)
                 .WithMany(c => c.Accounts)
@@ -49,7 +51,7 @@ public class BankingDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Reference).HasMaxLength(50).IsRequired();
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql(SqlGetUtcDateFunction);
         });
 
         // Configure LedgerEntry
@@ -58,7 +60,7 @@ public class BankingDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Amount).HasPrecision(18, 2);
             entity.Property(e => e.EntryType).HasMaxLength(10).IsRequired();
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql(SqlGetUtcDateFunction);
             
             entity.HasOne(e => e.Transaction)
                 .WithMany(t => t.LedgerEntries)
