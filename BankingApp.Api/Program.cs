@@ -5,6 +5,7 @@ using BankingApp.Application.CQRS.CommandHandlers;
 using BankingApp.Application.CQRS.QueryHandlers;
 using BankingApp.Application.Validators;
 using BankingApp.Application.UnitOfWork;
+using BankingApp.Api.Middleware;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,7 +13,33 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddOpenApi();
-builder.Services.AddControllers();
+
+// Configure API Controller behavior and validation error response format
+builder.Services
+    .AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(x => x.Value?.Errors.Count > 0)
+                .ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToArray() ?? Array.Empty<string>()
+                );
+
+            var errorResponse = new BankingApp.Application.DTOs.ErrorResponse
+            {
+                Message = "One or more validation errors occurred.",
+                ErrorCode = (int)BankingApp.Application.Exceptions.BankingErrorCode.ValidationFailed,
+                StatusCode = Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest,
+                TraceId = context.HttpContext.TraceIdentifier,
+                ValidationErrors = errors
+            };
+
+            return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(errorResponse);
+        };
+    });
 
 // Register DbContext
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
@@ -76,6 +103,9 @@ else
 }
 
 // Configure the HTTP request pipeline.
+// Add global error handling middleware (must be near the top of the pipeline)
+app.UseMiddleware<ErrorHandlingMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

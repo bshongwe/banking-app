@@ -16,6 +16,8 @@ This is a full-stack banking application that demonstrates clean architecture pr
 - ✅ **Double-Entry Bookkeeping** - Complete audit trail via ledger entries
 - ✅ **Transaction Safety** - Database transactions ensure data consistency
 - ✅ **Interactive API Documentation** - ReDoc interface for testing endpoints
+- ✅ **Banking-Grade Error Handling** - 18 domain-specific error codes with HTTP status codes
+- ✅ **Production-Ready** - Clean architecture, comprehensive documentation, zero build warnings
 
 ---
 
@@ -175,6 +177,130 @@ erDiagram
 - `Amount` (DECIMAL) - Entry amount
 - `EntryType` (TEXT) - "Debit" or "Credit"
 - `CreatedAt` (DATETIME) - Timestamp
+
+---
+
+## Error Handling
+
+The API implements a comprehensive, production-grade error handling system with banking-specific error codes.
+
+### HTTP Status Codes
+
+| Code | Meaning | Banking Example |
+|------|---------|-----------------|
+| **200** | Request succeeded | Fetch account balance |
+| **201** | Resource created | New bank account or transfer created |
+| **400** | Bad request | Invalid transfer amount |
+| **404** | Not found | Account or customer does not exist |
+| **409** | Conflict | Duplicate account number |
+| **422** | Unprocessable entity | Insufficient funds |
+| **500** | Server error | Unexpected exception |
+
+### Banking Error Codes
+
+Every error response includes a domain-specific error code (in addition to HTTP status):
+
+| Code | Meaning | HTTP Status |
+|------|---------|------------|
+| 4000 | Validation failed | 400 |
+| 4001 | Account not found | 404 |
+| 4003 | Duplicate account number | 409 |
+| 4004 | Account frozen | 422 |
+| 4005 | Insufficient funds | 422 |
+| 4006 | Invalid transfer amount | 400 |
+| 4008 | Currency mismatch | 422 |
+| 4010 | Customer not found | 404 |
+| 4011 | Duplicate email | 409 |
+| 5000 | Internal server error | 500 |
+
+### Error Response Format
+
+All error responses follow a standardized format:
+
+```json
+{
+  "message": "Insufficient funds.",
+  "errorCode": 4005,
+  "statusCode": 422,
+  "traceId": "0HN6O5RA2VDCF:00000001"
+}
+```
+
+**Fields**:
+- `message` - Generic error message (no sensitive data)
+- `errorCode` - Banking-specific error code for programmatic handling
+- `statusCode` - HTTP status code
+- `traceId` - Unique identifier for support/logging correlation
+
+### Error Examples
+
+**Insufficient Funds (422)**:
+```bash
+curl -X POST http://localhost:5242/api/transfers \
+  -H "Content-Type: application/json" \
+  -d '{"fromAccountId":"...","toAccountId":"...","amount":10000}'
+
+# Response:
+{
+  "message": "Insufficient funds.",
+  "errorCode": 4005,
+  "statusCode": 422,
+  "traceId": "..."
+}
+```
+
+**Duplicate Account Number (409)**:
+```bash
+curl -X POST http://localhost:5242/api/accounts \
+  -H "Content-Type: application/json" \
+  -d '{"customerId":"...","accountNumber":"ACC001"}'
+
+# Response:
+{
+  "message": "Account number 'ACC001' already exists.",
+  "errorCode": 4003,
+  "statusCode": 409,
+  "traceId": "..."
+}
+```
+
+**Invalid Transfer Amount (400)**:
+```bash
+curl -X POST http://localhost:5242/api/transfers \
+  -H "Content-Type: application/json" \
+  -d '{"fromAccountId":"...","toAccountId":"...","amount":-100}'
+
+# Response:
+{
+  "message": "Transfer amount must be greater than zero.",
+  "errorCode": 4006,
+  "statusCode": 400,
+  "traceId": "..."
+}
+```
+
+**Customer Not Found (404)**:
+```bash
+curl -X GET http://localhost:5242/api/customers/00000000-0000-0000-0000-000000000000
+
+# Response:
+{
+  "message": "Customer not found.",
+  "errorCode": 4010,
+  "statusCode": 404,
+  "traceId": "..."
+}
+```
+
+### Complete Error Documentation
+
+For comprehensive error handling documentation including all 18 banking error codes, development guide, and testing patterns:
+
+📖 **[ERROR_HANDLING.md](./ERROR_HANDLING.md)** - Complete error handling guide  
+📖 **[ERROR_QUICK_REFERENCE.md](./ERROR_QUICK_REFERENCE.md)** - Quick error code lookup  
+📖 **[ERROR_CODES_MATRIX.md](./ERROR_CODES_MATRIX.md)** - Error code reference matrix  
+📖 **[BEFORE_AFTER_COMPARISON.md](./BEFORE_AFTER_COMPARISON.md)** - Implementation details  
+📖 **[ERROR_HANDLING_INDEX.md](./ERROR_HANDLING_INDEX.md)** - Master index
 
 ---
 

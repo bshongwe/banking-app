@@ -1,6 +1,8 @@
 using BankingApp.Domain.Entities;
 using BankingApp.Infrastructure.Repositories;
 using BankingApp.Application.UnitOfWork;
+using BankingApp.Application.Exceptions;
+using BankingApp.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace BankingApp.Application.CQRS.CommandHandlers;
@@ -10,15 +12,18 @@ public class CreateAccountCommandHandler
     private readonly IAccountRepository _accountRepository;
     private readonly ILedgerRepository _ledgerRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly BankingDbContext _context;
 
     public CreateAccountCommandHandler(
         IAccountRepository accountRepository,
         ILedgerRepository ledgerRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        BankingDbContext context)
     {
         _accountRepository = accountRepository;
         _ledgerRepository = ledgerRepository;
         _unitOfWork = unitOfWork;
+        _context = context;
     }
 
     public async Task<Account> HandleAsync(Commands.CreateAccountCommand command)
@@ -32,11 +37,16 @@ public class CreateAccountCommandHandler
         if (command.InitialBalance < 0)
             throw new ArgumentException("Initial balance cannot be negative.");
 
-        // Begin transaction to ensure account and initial balance are persisted atomically
+        // Begin transaction first so validation and writes share the same boundary
         await _unitOfWork.BeginTransactionAsync();
 
         try
         {
+            // Validate customer exists within the transaction
+            var customerExists = await _context.Customers.AnyAsync(c => c.Id == command.CustomerId);
+            if (!customerExists)
+                throw new ResourceNotFoundException("Customer", command.CustomerId);
+
             var account = new Account
             {
                 Id = Guid.NewGuid(),
@@ -72,11 +82,14 @@ public class CreateAccountCommandHandler
 
             return account;
         }
-        catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("UNIQUE constraint failed") ?? false)
+        catch (DbUpdateException ex) when (
+            ex.InnerException?.Message.Contains(
+                "UNIQUE constraint failed: Accounts.AccountNumber",
+                StringComparison.OrdinalIgnoreCase) == true)
         {
             // Handle unique constraint violation on AccountNumber
             await _unitOfWork.RollbackTransactionAsync();
-            throw new InvalidOperationException($"Account number {command.AccountNumber} already exists.", ex);
+            throw new DuplicateAccountNumberException(command.AccountNumber);
         }
         catch
         {
@@ -86,3 +99,4 @@ public class CreateAccountCommandHandler
         }
     }
 }
+
