@@ -1,4 +1,5 @@
 using BankingApp.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace BankingApp.Application.Extensions;
 
