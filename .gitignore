@@ -55,6 +55,8 @@ Thumbs.db
 
 # Local database files
 *.db
+*.db-wal
+*.db-shm
 *.sqlite
 *.sqlite3
 
