@@ -12,13 +12,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddOpenApi();
+builder.Services.AddControllers();
 
 // Register DbContext
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 builder.Services.AddDbContext<BankingDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlite(connectionString));
 
 // Register repositories
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
@@ -42,7 +43,7 @@ builder.Services.AddScoped<GetAccountTransactionHistoryQueryHandler>();
 builder.Services.AddScoped<GetCustomerQueryHandler>();
 
 // Register FluentValidation validators
-builder.Services.AddValidatorsFromAssemblyContaining<TransferMoneyCommandValidator>();
+// builder.Services.AddValidatorsFromAssemblyContaining<TransferMoneyCommandValidator>();
 
 var app = builder.Build();
 
@@ -53,6 +54,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Map controllers
+app.MapControllers();
 
 var summaries = new[]
 {
