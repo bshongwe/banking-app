@@ -8,9 +8,17 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
+    <PackageReference Include="FluentValidation" Version="12.1.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.5">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\BankingApp.Domain\BankingApp.Domain.csproj" />
     <ProjectReference Include="..\BankingApp.Infrastructure\BankingApp.Infrastructure.csproj" />
+    <ProjectReference Include="..\BankingApp.Application\BankingApp.Application.csproj" />
   </ItemGroup>
+
+</Project>
