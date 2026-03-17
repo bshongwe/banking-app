@@ -84,8 +84,12 @@ public class TransferMoneyCommandHandler
             await _ledgerRepository.AddRangeAsync(new[] { debitEntry, creditEntry });
             await _transactionRepository.SaveChangesAsync();
 
-            // Commit the transaction after all writes succeed
-            await _unitOfWork.CommitTransactionAsync();
+            // Commit the transaction after all writes succeed and verify commit succeeded
+            var commitSucceeded = await _unitOfWork.CommitTransactionAsync();
+            if (!commitSucceeded)
+            {
+                throw new InvalidOperationException("Failed to commit the transfer transaction. The operation was rolled back.");
+            }
 
             return transaction;
         }

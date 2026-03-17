@@ -40,7 +40,7 @@ public class GetAccountTransactionHistoryQueryHandler
                 le.Amount,
                 le.EntryType,
                 le.CreatedAt,
-                TransactionReference = le.Transaction!.Reference
+                TransactionReference = le.Transaction != null ? le.Transaction.Reference : null
             })
             .ToListAsync();
 

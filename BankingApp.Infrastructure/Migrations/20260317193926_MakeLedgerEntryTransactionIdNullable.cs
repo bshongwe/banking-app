@@ -23,12 +23,16 @@ namespace BankingApp.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            // Handle rows with NULL TransactionId by deleting them (or you could update to a valid ID if needed)
+            // This ensures we don't violate FK constraints when converting back to non-nullable
+            migrationBuilder.Sql("DELETE FROM \"LedgerEntries\" WHERE \"TransactionId\" IS NULL");
+
             migrationBuilder.AlterColumn<Guid>(
                 name: "TransactionId",
                 table: "LedgerEntries",
                 type: "TEXT",
                 nullable: false,
-                defaultValue: new Guid("00000000-0000-0000-0000-000000000000"),
+                defaultValue: Guid.Empty,
                 oldClrType: typeof(Guid),
                 oldType: "TEXT",
                 oldNullable: true);

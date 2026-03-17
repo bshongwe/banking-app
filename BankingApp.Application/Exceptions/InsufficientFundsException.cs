@@ -26,7 +26,7 @@ public class InsufficientFundsException : Exception
     /// Returns detailed balance information for internal logging only.
     /// Do NOT expose this to clients.
     /// </summary>
-    public string GetSensitiveDetails()
+    internal string GetSensitiveDetails()
     {
         return $"Current balance: {CurrentBalance:C}, requested amount: {RequestedAmount:C}";
     }
