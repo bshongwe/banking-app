@@ -18,6 +18,11 @@ builder.Services.AddControllers();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
+// Replace |DataDirectory| token with the application's data directory
+var dataDirectory = Path.Combine(AppContext.BaseDirectory, "Data");
+Directory.CreateDirectory(dataDirectory);
+connectionString = connectionString.Replace("|DataDirectory|", dataDirectory);
+
 builder.Services.AddDbContext<BankingDbContext>(options =>
     options.UseSqlite(connectionString));
 
@@ -42,10 +47,23 @@ builder.Services.AddScoped<GetAccountDetailQueryHandler>();
 builder.Services.AddScoped<GetAccountTransactionHistoryQueryHandler>();
 builder.Services.AddScoped<GetCustomerQueryHandler>();
 
-// Register FluentValidation validators
-// builder.Services.AddValidatorsFromAssemblyContaining<TransferMoneyCommandValidator>();
-
 var app = builder.Build();
+
+// Apply migrations automatically on startup
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<BankingDbContext>();
+        await db.Database.MigrateAsync();
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while migrating the database");
+        throw;
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
