@@ -8,14 +8,14 @@ This is a full-stack banking application that demonstrates clean architecture pr
 
 ### Key Features
 
-✅ **Customer Management** - Create and retrieve customer profiles
-✅ **Account Management** - Create accounts with optional initial balance
-✅ **Money Transfers** - Atomic transfer operations between accounts with race condition prevention
-✅ **Transaction History** - Paginated ledger entries with deterministic sorting
-✅ **Balance Queries** - Real-time account balance calculations
-✅ **Double-Entry Bookkeeping** - Complete audit trail via ledger entries
-✅ **Transaction Safety** - Database transactions ensure data consistency
-✅ **Interactive API Documentation** - ReDoc interface for testing endpoints
+- ✅ **Customer Management** - Create and retrieve customer profiles
+- ✅ **Account Management** - Create accounts with optional initial balance
+- ✅ **Money Transfers** - Atomic transfer operations between accounts with race condition prevention
+- ✅ **Transaction History** - Paginated ledger entries with deterministic sorting
+- ✅ **Balance Queries** - Real-time account balance calculations
+- ✅ **Double-Entry Bookkeeping** - Complete audit trail via ledger entries
+- ✅ **Transaction Safety** - Database transactions ensure data consistency
+- ✅ **Interactive API Documentation** - ReDoc interface for testing endpoints
 
 ---
 
@@ -546,20 +546,20 @@ Custom exceptions (`InsufficientFundsException`, `ResourceNotFoundException`) pr
 
 ## Security Considerations
 
-✅ **Input Validation** - All inputs validated with FluentValidation
-✅ **SQL Injection Prevention** - Parameterized queries via EF Core
-✅ **Sensitive Data** - Balance information logged internally only, generic messages to clients
-✅ **Transaction Safety** - Database constraints prevent invalid states
-✅ **Error Handling** - Generic error messages prevent information disclosure
+- ✅ **Input Validation** - All inputs validated with FluentValidation
+- ✅ **SQL Injection Prevention** - Parameterized queries via EF Core
+- ✅ **Sensitive Data** - Balance information logged internally only, generic messages to clients
+- ✅ **Transaction Safety** - Database constraints prevent invalid states
+- ✅ **Error Handling** - Generic error messages prevent information disclosure
 
 ---
 
 ## Performance Optimizations
 
-✅ **Pagination** - Transaction history supports 1-100 items per page
-✅ **Deterministic Sorting** - Secondary sort by ID ensures consistent ordering
-✅ **Indexes** - Unique constraints on account numbers and emails
-✅ **Lazy Loading** - Entities loaded only when needed
+- ✅ **Pagination** - Transaction history supports 1-100 items per page
+- ✅ **Deterministic Sorting** - Secondary sort by ID ensures consistent ordering
+- ✅ **Indexes** - Unique constraints on account numbers and emails
+- ✅ **Lazy Loading** - Entities loaded only when needed
 
 ---
 
