@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using BankingApp.Application.CQRS.Commands;
 using BankingApp.Application.CQRS.CommandHandlers;
+using BankingApp.Application.Exceptions;
 
 namespace BankingApp.Api.Controllers;
 
@@ -9,10 +10,14 @@ namespace BankingApp.Api.Controllers;
 public class TransfersController : ControllerBase
 {
     private readonly TransferMoneyCommandHandler _transferHandler;
+    private readonly ILogger<TransfersController> _logger;
 
-    public TransfersController(TransferMoneyCommandHandler transferHandler)
+    public TransfersController(
+        TransferMoneyCommandHandler transferHandler,
+        ILogger<TransfersController> logger)
     {
         _transferHandler = transferHandler;
+        _logger = logger;
     }
 
     /// <summary>
@@ -44,18 +49,19 @@ public class TransfersController : ControllerBase
         {
             return BadRequest(new { error = ex.Message });
         }
-        catch (InvalidOperationException ex)
+        catch (ResourceNotFoundException ex)
         {
-            // Could be account not found or insufficient funds
-            if (ex.Message.Contains("not found"))
-                return NotFound(new { error = ex.Message });
-            
+            return NotFound(new { error = ex.Message });
+        }
+        catch (InsufficientFundsException ex)
+        {
             return UnprocessableEntity(new { error = ex.Message });
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error processing transfer");
             return StatusCode(StatusCodes.Status500InternalServerError, 
-                new { error = "An error occurred while processing the transfer", details = ex.Message });
+                new { error = "An internal error occurred. Please try again later." });
         }
     }
 }

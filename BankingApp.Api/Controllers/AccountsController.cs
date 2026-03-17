@@ -3,6 +3,7 @@ using BankingApp.Application.CQRS.Commands;
 using BankingApp.Application.CQRS.CommandHandlers;
 using BankingApp.Application.CQRS.Queries;
 using BankingApp.Application.CQRS.QueryHandlers;
+using BankingApp.Application.Exceptions;
 
 namespace BankingApp.Api.Controllers;
 
@@ -14,17 +15,20 @@ public class AccountsController : ControllerBase
     private readonly GetAccountBalanceQueryHandler _getBalanceHandler;
     private readonly GetAccountDetailQueryHandler _getDetailHandler;
     private readonly GetAccountTransactionHistoryQueryHandler _getTransactionsHandler;
+    private readonly ILogger<AccountsController> _logger;
 
     public AccountsController(
         CreateAccountCommandHandler createAccountHandler,
         GetAccountBalanceQueryHandler getBalanceHandler,
         GetAccountDetailQueryHandler getDetailHandler,
-        GetAccountTransactionHistoryQueryHandler getTransactionsHandler)
+        GetAccountTransactionHistoryQueryHandler getTransactionsHandler,
+        ILogger<AccountsController> logger)
     {
         _createAccountHandler = createAccountHandler;
         _getBalanceHandler = getBalanceHandler;
         _getDetailHandler = getDetailHandler;
         _getTransactionsHandler = getTransactionsHandler;
+        _logger = logger;
     }
 
     /// <summary>
@@ -50,8 +54,9 @@ public class AccountsController : ControllerBase
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error creating account");
             return StatusCode(StatusCodes.Status500InternalServerError, 
-                new { error = "An error occurred while creating the account", details = ex.Message });
+                new { error = "An internal error occurred. Please try again later." });
         }
     }
 
@@ -75,8 +80,9 @@ public class AccountsController : ControllerBase
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error retrieving account with ID {AccountId}", id);
             return StatusCode(StatusCodes.Status500InternalServerError, 
-                new { error = "An error occurred while retrieving the account", details = ex.Message });
+                new { error = "An internal error occurred. Please try again later." });
         }
     }
 
@@ -100,19 +106,31 @@ public class AccountsController : ControllerBase
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error retrieving balance for account {AccountId}", id);
             return StatusCode(StatusCodes.Status500InternalServerError, 
-                new { error = "An error occurred while retrieving the balance", details = ex.Message });
+                new { error = "An internal error occurred. Please try again later." });
         }
     }
 
     /// <summary>
-    /// Get transaction history for an account
+    /// Get transaction history for an account with pagination
     /// </summary>
     [HttpGet("{id}/transactions")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetTransactionHistory(Guid id, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetTransactionHistory(
+        Guid id,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
     {
+        // Validate pagination parameters
+        if (pageNumber <= 0)
+            return BadRequest(new { error = "pageNumber must be greater than 0" });
+        
+        if (pageSize <= 0 || pageSize > 100)
+            return BadRequest(new { error = "pageSize must be between 1 and 100" });
+
         try
         {
             var query = new GetAccountTransactionHistoryQuery 
@@ -124,14 +142,15 @@ public class AccountsController : ControllerBase
             var result = await _getTransactionsHandler.HandleAsync(query);
             return Ok(result);
         }
-        catch (InvalidOperationException ex)
+        catch (ResourceNotFoundException ex)
         {
             return NotFound(new { error = ex.Message });
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error retrieving transactions for account {AccountId}", id);
             return StatusCode(StatusCodes.Status500InternalServerError, 
-                new { error = "An error occurred while retrieving transactions", details = ex.Message });
+                new { error = "An internal error occurred. Please try again later." });
         }
     }
 }
