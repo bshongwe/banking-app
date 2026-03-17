@@ -1,6 +1,11 @@
 using BankingApp.Infrastructure.Data;
 using BankingApp.Infrastructure.Repositories;
 using BankingApp.Application.Services;
+using BankingApp.Application.CQRS.CommandHandlers;
+using BankingApp.Application.CQRS.QueryHandlers;
+using BankingApp.Application.Validators;
+using BankingApp.Application.UnitOfWork;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,8 +24,25 @@ builder.Services.AddDbContext<BankingDbContext>(options =>
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<ILedgerRepository, LedgerRepository>();
 
+// Register Unit of Work
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 // Register services
 builder.Services.AddScoped<ITransferService, TransferService>();
+
+// Register CQRS Command Handlers
+builder.Services.AddScoped<TransferMoneyCommandHandler>();
+builder.Services.AddScoped<CreateAccountCommandHandler>();
+builder.Services.AddScoped<CreateCustomerCommandHandler>();
+
+// Register CQRS Query Handlers
+builder.Services.AddScoped<GetAccountBalanceQueryHandler>();
+builder.Services.AddScoped<GetAccountDetailQueryHandler>();
+builder.Services.AddScoped<GetAccountTransactionHistoryQueryHandler>();
+builder.Services.AddScoped<GetCustomerQueryHandler>();
+
+// Register FluentValidation validators
+builder.Services.AddValidatorsFromAssemblyContaining<TransferMoneyCommandValidator>();
 
 var app = builder.Build();
 
