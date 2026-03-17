@@ -3,7 +3,7 @@ using BankingApp.Application.CQRS.Commands;
 using BankingApp.Application.CQRS.CommandHandlers;
 using BankingApp.Application.CQRS.Queries;
 using BankingApp.Application.CQRS.QueryHandlers;
-using BankingApp.Application.Exceptions;
+using BankingApp.Application.DTOs;
 
 namespace BankingApp.Api.Controllers;
 
@@ -15,20 +15,17 @@ public class AccountsController : ControllerBase
     private readonly GetAccountBalanceQueryHandler _getBalanceHandler;
     private readonly GetAccountDetailQueryHandler _getDetailHandler;
     private readonly GetAccountTransactionHistoryQueryHandler _getTransactionsHandler;
-    private readonly ILogger<AccountsController> _logger;
 
     public AccountsController(
         CreateAccountCommandHandler createAccountHandler,
         GetAccountBalanceQueryHandler getBalanceHandler,
         GetAccountDetailQueryHandler getDetailHandler,
-        GetAccountTransactionHistoryQueryHandler getTransactionsHandler,
-        ILogger<AccountsController> logger)
+        GetAccountTransactionHistoryQueryHandler getTransactionsHandler)
     {
         _createAccountHandler = createAccountHandler;
         _getBalanceHandler = getBalanceHandler;
         _getDetailHandler = getDetailHandler;
         _getTransactionsHandler = getTransactionsHandler;
-        _logger = logger;
     }
 
     /// <summary>
@@ -36,28 +33,14 @@ public class AccountsController : ControllerBase
     /// </summary>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> CreateAccount([FromBody] CreateAccountCommand command)
     {
-        try
-        {
-            var account = await _createAccountHandler.HandleAsync(command);
-            return CreatedAtAction(nameof(GetAccountDetails), new { id = account.Id }, account);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { error = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating account");
-            return StatusCode(StatusCodes.Status500InternalServerError, 
-                new { error = "An internal error occurred. Please try again later." });
-        }
+        var account = await _createAccountHandler.HandleAsync(command);
+        return CreatedAtAction(nameof(GetAccountDetails), new { id = account.Id }, account);
     }
 
     /// <summary>
@@ -65,25 +48,13 @@ public class AccountsController : ControllerBase
     /// </summary>
     [HttpGet("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> GetAccountDetails(Guid id)
     {
-        try
-        {
-            var query = new GetAccountDetailQuery { AccountId = id };
-            var account = await _getDetailHandler.HandleAsync(query);
-            return Ok(account);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving account with ID {AccountId}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, 
-                new { error = "An internal error occurred. Please try again later." });
-        }
+        var query = new GetAccountDetailQuery { AccountId = id };
+        var account = await _getDetailHandler.HandleAsync(query);
+        return Ok(account);
     }
 
     /// <summary>
@@ -91,25 +62,13 @@ public class AccountsController : ControllerBase
     /// </summary>
     [HttpGet("{id}/balance")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> GetAccountBalance(Guid id)
     {
-        try
-        {
-            var query = new GetAccountBalanceQuery { AccountId = id };
-            var balance = await _getBalanceHandler.HandleAsync(query);
-            return Ok(new { accountId = id, balance });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving balance for account {AccountId}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, 
-                new { error = "An internal error occurred. Please try again later." });
-        }
+        var query = new GetAccountBalanceQuery { AccountId = id };
+        var balance = await _getBalanceHandler.HandleAsync(query);
+        return Ok(new { accountId = id, balance });
     }
 
     /// <summary>
@@ -117,8 +76,9 @@ public class AccountsController : ControllerBase
     /// </summary>
     [HttpGet("{id}/transactions")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> GetTransactionHistory(
         Guid id,
         [FromQuery] int pageNumber = 1,
@@ -126,31 +86,18 @@ public class AccountsController : ControllerBase
     {
         // Validate pagination parameters
         if (pageNumber <= 0)
-            return BadRequest(new { error = "pageNumber must be greater than 0" });
+            throw new ArgumentException("pageNumber must be greater than 0");
         
         if (pageSize <= 0 || pageSize > 100)
-            return BadRequest(new { error = "pageSize must be between 1 and 100" });
+            throw new ArgumentException("pageSize must be between 1 and 100");
 
-        try
-        {
-            var query = new GetAccountTransactionHistoryQuery 
-            { 
-                AccountId = id,
-                PageNumber = pageNumber,
-                PageSize = pageSize
-            };
-            var result = await _getTransactionsHandler.HandleAsync(query);
-            return Ok(result);
-        }
-        catch (ResourceNotFoundException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving transactions for account {AccountId}", id);
-            return StatusCode(StatusCodes.Status500InternalServerError, 
-                new { error = "An internal error occurred. Please try again later." });
-        }
+        var query = new GetAccountTransactionHistoryQuery 
+        { 
+            AccountId = id,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
+        var result = await _getTransactionsHandler.HandleAsync(query);
+        return Ok(result);
     }
 }

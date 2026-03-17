@@ -1,6 +1,7 @@
 using BankingApp.Domain.Entities;
 using BankingApp.Infrastructure.Repositories;
 using BankingApp.Application.UnitOfWork;
+using BankingApp.Application.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace BankingApp.Application.CQRS.CommandHandlers;
@@ -76,7 +77,7 @@ public class CreateAccountCommandHandler
         {
             // Handle unique constraint violation on AccountNumber
             await _unitOfWork.RollbackTransactionAsync();
-            throw new InvalidOperationException($"Account number {command.AccountNumber} already exists.", ex);
+            throw new DuplicateAccountNumberException(command.AccountNumber);
         }
         catch
         {

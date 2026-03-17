@@ -5,6 +5,7 @@ using BankingApp.Application.CQRS.CommandHandlers;
 using BankingApp.Application.CQRS.QueryHandlers;
 using BankingApp.Application.Validators;
 using BankingApp.Application.UnitOfWork;
+using BankingApp.Api.Middleware;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -76,6 +77,9 @@ else
 }
 
 // Configure the HTTP request pipeline.
+// Add global error handling middleware (must be near the top of the pipeline)
+app.UseMiddleware<ErrorHandlingMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

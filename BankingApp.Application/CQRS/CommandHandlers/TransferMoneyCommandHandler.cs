@@ -26,8 +26,9 @@ public class TransferMoneyCommandHandler
 
     public async Task<Transaction> HandleAsync(Commands.TransferMoneyCommand command)
     {
+        // Validate transfer amount first
         if (command.Amount <= 0)
-            throw new ArgumentException("Transfer amount must be greater than zero.");
+            throw new InvalidTransferAmountException(command.Amount);
 
         if (command.FromAccountId == command.ToAccountId)
             throw new ArgumentException("Cannot transfer to the same account.");
@@ -44,6 +45,10 @@ public class TransferMoneyCommandHandler
             var toAccount = await _accountRepository.GetByIdAsync(command.ToAccountId);
             if (toAccount == null)
                 throw new ResourceNotFoundException("Account", command.ToAccountId);
+
+            // Verify currencies match before transfer
+            if (fromAccount.Currency != toAccount.Currency)
+                throw new CurrencyMismatchException(fromAccount.Currency, toAccount.Currency);
 
             // Check if source account has sufficient balance
             // This check is now atomic with the persistence below due to transaction wrapping

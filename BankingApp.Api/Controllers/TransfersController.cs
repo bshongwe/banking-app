@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using BankingApp.Application.CQRS.Commands;
 using BankingApp.Application.CQRS.CommandHandlers;
 using BankingApp.Application.Exceptions;
+using BankingApp.Application.DTOs;
 
 namespace BankingApp.Api.Controllers;
 
@@ -10,14 +11,10 @@ namespace BankingApp.Api.Controllers;
 public class TransfersController : ControllerBase
 {
     private readonly TransferMoneyCommandHandler _transferHandler;
-    private readonly ILogger<TransfersController> _logger;
 
-    public TransfersController(
-        TransferMoneyCommandHandler transferHandler,
-        ILogger<TransfersController> logger)
+    public TransfersController(TransferMoneyCommandHandler transferHandler)
     {
         _transferHandler = transferHandler;
-        _logger = logger;
     }
 
     /// <summary>
@@ -29,40 +26,20 @@ public class TransfersController : ControllerBase
     /// </remarks>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> TransferMoney([FromBody] TransferMoneyCommand command)
     {
-        try
-        {
-            var transaction = await _transferHandler.HandleAsync(command);
-            return Ok(new 
-            { 
-                message = "Transfer completed successfully",
-                transactionId = transaction.Id,
-                reference = transaction.Reference,
-                createdAt = transaction.CreatedAt
-            });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (ResourceNotFoundException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
-        catch (InsufficientFundsException ex)
-        {
-            _logger.LogWarning(ex, "Transfer failed due to insufficient funds: {Details}", ex.GetSensitiveDetails());
-            return UnprocessableEntity(new { error = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing transfer");
-            return StatusCode(StatusCodes.Status500InternalServerError, 
-                new { error = "An internal error occurred. Please try again later." });
-        }
+        var transaction = await _transferHandler.HandleAsync(command);
+        return Ok(new 
+        { 
+            message = "Transfer completed successfully",
+            transactionId = transaction.Id,
+            reference = transaction.Reference,
+            createdAt = transaction.CreatedAt
+        });
     }
 }
