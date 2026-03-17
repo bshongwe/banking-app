@@ -5,8 +5,15 @@ namespace BankingApp.Application.Exceptions;
 /// </summary>
 public class InsufficientFundsException : Exception
 {
-    public decimal CurrentBalance { get; }
-    public decimal RequestedAmount { get; }
+    /// <summary>
+    /// The current account balance. Internal use only.
+    /// </summary>
+    internal decimal CurrentBalance { get; }
+
+    /// <summary>
+    /// The requested transfer amount. Internal use only.
+    /// </summary>
+    internal decimal RequestedAmount { get; }
 
     public InsufficientFundsException(decimal currentBalance, decimal requestedAmount)
         : base("Insufficient funds.")

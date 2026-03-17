@@ -3,6 +3,9 @@ using BankingApp.Infrastructure.Data;
 
 namespace BankingApp.Infrastructure.Repositories;
 
+/// <summary>
+/// Concrete implementation of ITransactionRepository using Entity Framework Core.
+/// </summary>
 public class TransactionRepository : ITransactionRepository
 {
     private readonly BankingDbContext _context;
