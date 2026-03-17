@@ -8,16 +8,16 @@ public class TransferMoneyCommandHandler
 {
     private readonly IAccountRepository _accountRepository;
     private readonly ILedgerRepository _ledgerRepository;
-    private readonly BankingApp.Infrastructure.Data.BankingDbContext _context;
+    private readonly ITransactionRepository _transactionRepository;
 
     public TransferMoneyCommandHandler(
         IAccountRepository accountRepository,
         ILedgerRepository ledgerRepository,
-        BankingApp.Infrastructure.Data.BankingDbContext context)
+        ITransactionRepository transactionRepository)
     {
         _accountRepository = accountRepository;
         _ledgerRepository = ledgerRepository;
-        _context = context;
+        _transactionRepository = transactionRepository;
     }
 
     public async Task<Transaction> HandleAsync(Commands.TransferMoneyCommand command)
@@ -69,10 +69,10 @@ public class TransferMoneyCommandHandler
             CreatedAt = DateTime.UtcNow
         };
 
-        // Add entries and save as a single transaction
-        await _context.Transactions.AddAsync(transaction);
+        // Persist all data through repositories as a single unit of work
+        await _transactionRepository.AddAsync(transaction);
         await _ledgerRepository.AddRangeAsync(new[] { debitEntry, creditEntry });
-        await _ledgerRepository.SaveChangesAsync();
+        await _transactionRepository.SaveChangesAsync();
 
         return transaction;
     }
