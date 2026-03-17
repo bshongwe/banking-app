@@ -3,6 +3,7 @@ using BankingApp.Application.CQRS.Commands;
 using BankingApp.Application.CQRS.CommandHandlers;
 using BankingApp.Application.CQRS.Queries;
 using BankingApp.Application.CQRS.QueryHandlers;
+using BankingApp.Application.Exceptions;
 
 namespace BankingApp.Api.Controllers;
 
@@ -36,10 +37,11 @@ public class CustomersController : ControllerBase
         {
             var query = new GetCustomerQuery { CustomerId = id };
             var customer = await _getCustomerHandler.HandleAsync(query);
-            if (customer == null)
-                return NotFound(new { error = "Customer not found" });
-            
             return Ok(customer);
+        }
+        catch (ResourceNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
         }
         catch (Exception ex)
         {

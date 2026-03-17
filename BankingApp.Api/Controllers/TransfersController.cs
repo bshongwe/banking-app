@@ -55,6 +55,7 @@ public class TransfersController : ControllerBase
         }
         catch (InsufficientFundsException ex)
         {
+            _logger.LogWarning(ex, "Transfer failed due to insufficient funds: {Details}", ex.GetSensitiveDetails());
             return UnprocessableEntity(new { error = ex.Message });
         }
         catch (Exception ex)
