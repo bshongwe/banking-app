@@ -28,12 +28,27 @@ public class ErrorHandlingMiddleware
         }
         catch (Exception ex)
         {
+            if (context.Response.HasStarted)
+            {
+                _logger.LogWarning(ex, "Unhandled exception after response started; skipping error body: {Method} {Path}", 
+                    context.Request.Method, context.Request.Path);
+                throw;
+            }
+
             await HandleExceptionAsync(context, ex, _logger);
         }
     }
 
     private static Task HandleExceptionAsync(HttpContext context, Exception exception, ILogger<ErrorHandlingMiddleware> logger)
     {
+        // If response has already started, we cannot modify headers or status code
+        if (context.Response.HasStarted)
+        {
+            logger.LogWarning(exception, "Exception occurred after response had already started: {Method} {Path}", 
+                context.Request.Method, context.Request.Path);
+            return Task.CompletedTask;
+        }
+
         context.Response.ContentType = "application/json";
 
         var response = new ErrorResponse
@@ -60,6 +75,14 @@ public class ErrorHandlingMiddleware
                 // Generic message - don't expose resource IDs
                 response.Message = $"{ex.ResourceType ?? "Resource"} not found.";
                 logger.LogInformation("Resource not found: {Method} {Path} - Code: {ErrorCode}", method, path, response.ErrorCode);
+                break;
+
+            case TransferNotAllowedException:
+                context.Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
+                response.StatusCode = StatusCodes.Status422UnprocessableEntity;
+                response.ErrorCode = (int)BankingErrorCode.TransferNotAllowed;
+                response.Message = "This transfer cannot be completed.";
+                logger.LogInformation("Transfer not allowed: {Method} {Path}", method, path);
                 break;
 
             case InsufficientFundsException:

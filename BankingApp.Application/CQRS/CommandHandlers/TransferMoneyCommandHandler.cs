@@ -31,7 +31,7 @@ public class TransferMoneyCommandHandler
             throw new InvalidTransferAmountException(command.Amount);
 
         if (command.FromAccountId == command.ToAccountId)
-            throw new ArgumentException("Cannot transfer to the same account.");
+            throw new TransferNotAllowedException("Cannot transfer to the same account.");
 
         // Start database transaction to prevent concurrent race conditions on balance checks
         await _unitOfWork.BeginTransactionAsync();

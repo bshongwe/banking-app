@@ -21,15 +21,6 @@ builder.Services
     {
         options.InvalidModelStateResponseFactory = context =>
         {
-            var problemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails
-            {
-                Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
-                Title = "One or more validation errors occurred.",
-                Status = Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest,
-                Detail = "See the errors property for details.",
-                Instance = context.HttpContext.Request.Path
-            };
-
             var errors = context.ModelState
                 .Where(x => x.Value?.Errors.Count > 0)
                 .ToDictionary(
@@ -37,9 +28,16 @@ builder.Services
                     kvp => kvp.Value?.Errors.Select(e => e.ErrorMessage).ToArray() ?? Array.Empty<string>()
                 );
 
-            problemDetails.Extensions["errors"] = errors;
+            var errorResponse = new BankingApp.Application.DTOs.ErrorResponse
+            {
+                Message = "One or more validation errors occurred.",
+                ErrorCode = (int)BankingApp.Application.Exceptions.BankingErrorCode.ValidationFailed,
+                StatusCode = Microsoft.AspNetCore.Http.StatusCodes.Status400BadRequest,
+                TraceId = context.HttpContext.TraceIdentifier,
+                ValidationErrors = errors
+            };
 
-            return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(problemDetails);
+            return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(errorResponse);
         };
     });
 

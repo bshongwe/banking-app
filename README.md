@@ -189,10 +189,9 @@ The API implements a comprehensive, production-grade error handling system with 
 | Code | Meaning | Banking Example |
 |------|---------|-----------------|
 | **200** | Request succeeded | Fetch account balance |
-| **201** | Resource created | New bank account created |
-| **206** | Partial data | Paginated transactions |
+| **201** | Resource created | New bank account or transfer created |
 | **400** | Bad request | Invalid transfer amount |
-| **404** | Not found | Account does not exist |
+| **404** | Not found | Account or customer does not exist |
 | **409** | Conflict | Duplicate account number |
 | **422** | Unprocessable entity | Insufficient funds |
 | **500** | Server error | Unexpected exception |
@@ -280,13 +279,13 @@ curl -X POST http://localhost:5242/api/transfers \
 }
 ```
 
-**Account Not Found (404)**:
+**Customer Not Found (404)**:
 ```bash
 curl -X GET http://localhost:5242/api/customers/00000000-0000-0000-0000-000000000000
 
 # Response:
 {
-  "message": "Customer with ID 00000000-0000-0000-0000-000000000000 not found.",
+  "message": "Customer not found.",
   "errorCode": 4010,
   "statusCode": 404,
   "traceId": "..."

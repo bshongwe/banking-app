@@ -37,16 +37,16 @@ public class CreateAccountCommandHandler
         if (command.InitialBalance < 0)
             throw new ArgumentException("Initial balance cannot be negative.");
 
-        // Pre-check: Validate customer exists
-        var customerExists = await _context.Customers.AnyAsync(c => c.Id == command.CustomerId);
-        if (!customerExists)
-            throw new ResourceNotFoundException("Customer", command.CustomerId);
-
-        // Begin transaction to ensure account and initial balance are persisted atomically
+        // Begin transaction first so validation and writes share the same boundary
         await _unitOfWork.BeginTransactionAsync();
 
         try
         {
+            // Validate customer exists within the transaction
+            var customerExists = await _context.Customers.AnyAsync(c => c.Id == command.CustomerId);
+            if (!customerExists)
+                throw new ResourceNotFoundException("Customer", command.CustomerId);
+
             var account = new Account
             {
                 Id = Guid.NewGuid(),
@@ -82,7 +82,10 @@ public class CreateAccountCommandHandler
 
             return account;
         }
-        catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("UNIQUE constraint failed") ?? false)
+        catch (DbUpdateException ex) when (
+            ex.InnerException?.Message.Contains(
+                "UNIQUE constraint failed: Accounts.AccountNumber",
+                StringComparison.OrdinalIgnoreCase) == true)
         {
             // Handle unique constraint violation on AccountNumber
             await _unitOfWork.RollbackTransactionAsync();

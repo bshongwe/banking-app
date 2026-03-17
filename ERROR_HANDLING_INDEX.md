@@ -66,10 +66,11 @@ A comprehensive, production-grade error handling system for the Banking App API 
 
 | Category | Codes | Status |
 |----------|-------|--------|
-| **2xx Success** | 200, 201, 206 | ✅ |
+| **2xx Success** | 200, 201 | ✅ |
 | **3xx Redirect** | 301, 302, 304 | ⏳ (using versioning) |
 | **4xx Client** | 400, 404, 409, 422 | ✅ |
-| **5xx Server** | 500, 503 | ✅ |
+| **5xx Server** | 500 | ✅ |
+| **5xx Server** | 503 | ⏳ (planned) |
 
 ### Error Code Ranges
 

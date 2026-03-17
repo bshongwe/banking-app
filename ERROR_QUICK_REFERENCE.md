@@ -46,7 +46,7 @@
 |------|------|---------|
 | 200 | Operation succeeded | Transfer completed |
 | 201 | Resource created | New customer/account |
-| 206 | Partial/paginated data | Transaction history |
+| 206 | ⏳ Planned | Paginated responses (future) |
 
 ### Client Errors (4xx)
 | Code | Domain Code | When | Example |
@@ -209,11 +209,11 @@ async function handleTransfer(request) {
 **Errors**: 404, 500
 
 ### GET /api/accounts/{id}/transactions
-**Success**: 200 OK (206 paginated)
+**Success**: 200 OK
 **Errors**: 400, 404, 500
 
 ### POST /api/transfers
-**Success**: 200 OK
+**Success**: 201 Created
 **Errors**: 400, 404, 409, 422, 500
 
 ### GET /api/customers/{id}
@@ -268,13 +268,19 @@ Client
 
 ## Error Code Convention
 
-```
-4000-4009: General & transaction errors
-4010-4019: Resource not found
-4020-4028: Conflict/duplicate
-4029-4999: Future expansion
+**Note**: Code assignments are defined in BankingApp.Application/Exceptions/BankingErrorCode.cs
 
-5000-5099: Server errors
+```
+4000-4002: Validation/general errors
+4003: Duplicate account number
+4004-4008: Transaction errors (frozen, insufficient, invalid amount, currency, transfer)
+4009: Duplicate transaction ID
+4010-4012: Resource not found (account, customer)
+4013-4014: Business rule violations
+4029: Rate limiting
+4999: Future expansion
+
+5000-5099: Server errors (5000: internal, 5003: unavailable)
 ```
 
 ---

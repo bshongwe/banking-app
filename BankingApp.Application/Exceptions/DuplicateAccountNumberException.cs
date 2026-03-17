@@ -10,7 +10,7 @@ public class DuplicateAccountNumberException : Exception
     public static BankingErrorCode ErrorCode => BankingErrorCode.DuplicateAccountNumber;
 
     public DuplicateAccountNumberException(string accountNumber)
-        : base($"Account number '{accountNumber}' already exists.")
+        : base("An account with this number already exists.")
     {
         AccountNumber = accountNumber;
     }

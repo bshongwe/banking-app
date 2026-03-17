@@ -6,11 +6,11 @@ namespace BankingApp.Application.Exceptions;
 /// </summary>
 public class DuplicateEmailException : Exception
 {
-    public string Email { get; }
+    internal string Email { get; }
     public static BankingErrorCode ErrorCode => BankingErrorCode.DuplicateEmail;
 
     public DuplicateEmailException(string email)
-        : base($"An account with email '{email}' already exists.")
+        : base("A customer with the specified email already exists.")
     {
         Email = email;
     }

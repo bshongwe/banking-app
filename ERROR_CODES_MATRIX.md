@@ -9,7 +9,7 @@
 | 200 OK | N/A | N/A | Fetch balance, successful transfer | ✅ |
 | 201 Created | N/A | N/A | Create customer/account | ✅ |
 | 204 No Content | N/A | N/A | Delete/close account | ⏳ |
-| 206 Partial Content | N/A | N/A | Paginated responses | ✅ |
+| 206 Partial Content | N/A | N/A | ⏳ Planned for future pagination | ⏳ |
 
 ---
 
@@ -50,7 +50,7 @@
 
 ## Exception Hierarchy & Middleware Mapping
 
-```
+```text
 Exception
 ├─ ResourceNotFoundException → 404 / 4001 or 4010
 ├─ InsufficientFundsException → 422 / 4005
@@ -88,7 +88,7 @@ Exception
 - 400 Bad Request (ErrorCode: 4000) - Invalid input
 - 404 Not Found (ErrorCode: 4010) - Customer not found
 - 409 Conflict (ErrorCode: 4003) - Duplicate account number
-- 422 Unprocessable Entity (ErrorCode: 4014) - Invalid initial balance
+- 400 Bad Request (ErrorCode: 4000) - Invalid initial balance
 
 **Server Errors**:
 - 500 Internal Server Error (ErrorCode: 5000)
@@ -121,7 +121,7 @@ Exception
 
 ### GET /api/accounts/{id}/transactions
 
-**Success**: 200 OK (206 Partial Content for paginated)
+**Success**: 200 OK
 
 **Client Errors**:
 - 400 Bad Request (ErrorCode: 4000) - Invalid pagination params
@@ -139,7 +139,7 @@ Exception
 **Client Errors**:
 - 400 Bad Request (ErrorCode: 4006) - Invalid transfer amount
 - 404 Not Found (ErrorCode: 4001) - Source/destination account not found
-- 409 Conflict (ErrorCode: 4003) - Cannot transfer to same account
+- 422 Unprocessable Entity (ErrorCode: 4007) - Cannot transfer to same account
 - 422 Unprocessable Entity (ErrorCode: 4005) - Insufficient funds
 - 422 Unprocessable Entity (ErrorCode: 4008) - Currency mismatch
 - 422 Unprocessable Entity (ErrorCode: 4004) - Account frozen
@@ -163,16 +163,20 @@ Exception
 
 ## Error Code Range Convention
 
-```
+```text
 4000-4099: Client errors (business rules and validation)
-  4000-4009: General/validation errors
-  4010-4019: Resource not found errors
-  4020-4028: Conflict errors
-  4029-4999: Future expansion
+  4000-4002: General/validation errors
+  4003: Duplicate account number
+  4004-4008: Transaction errors (frozen, insufficient, amount, currency, transfer rules)
+  4009: Duplicate transaction ID
+  4010-4012: Resource not found and customer errors
+  4013-4014: Business rule violations
+  4029: Rate limiting
+  4999: Future expansion
 
 5000-5099: Server errors
   5000: Internal server error
-  5001-5099: Service-level errors
+  5003: Service unavailable
 ```
 
 ---
