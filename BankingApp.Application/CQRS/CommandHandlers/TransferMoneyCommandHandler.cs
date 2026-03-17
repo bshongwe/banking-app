@@ -1,5 +1,6 @@
 using BankingApp.Domain.Entities;
 using BankingApp.Infrastructure.Repositories;
+using BankingApp.Application.Exceptions;
 
 namespace BankingApp.Application.CQRS.CommandHandlers;
 
@@ -29,17 +30,16 @@ public class TransferMoneyCommandHandler
 
         var fromAccount = await _accountRepository.GetByIdAsync(command.FromAccountId);
         if (fromAccount == null)
-            throw new InvalidOperationException($"Source account {command.FromAccountId} not found.");
+            throw new ResourceNotFoundException("Account", command.FromAccountId);
 
         var toAccount = await _accountRepository.GetByIdAsync(command.ToAccountId);
         if (toAccount == null)
-            throw new InvalidOperationException($"Destination account {command.ToAccountId} not found.");
+            throw new ResourceNotFoundException("Account", command.ToAccountId);
 
         // Check if source account has sufficient balance
         var fromAccountBalance = await _accountRepository.GetBalanceAsync(command.FromAccountId);
         if (fromAccountBalance < command.Amount)
-            throw new InvalidOperationException(
-                $"Insufficient funds. Current balance: {fromAccountBalance}, requested transfer: {command.Amount}");
+            throw new InsufficientFundsException(fromAccountBalance, command.Amount);
 
         // Create transaction and ledger entries using domain logic
         var transaction = new Transaction
