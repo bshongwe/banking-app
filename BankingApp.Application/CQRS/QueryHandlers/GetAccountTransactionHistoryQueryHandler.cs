@@ -13,7 +13,7 @@ public class GetAccountTransactionHistoryQueryHandler
         _context = context;
     }
 
-    public async Task<PaginatedResult> HandleAsync(Queries.GetAccountTransactionHistoryQuery query)
+    public async Task<PaginatedResult<AccountTransactionHistoryItem>> HandleAsync(Queries.GetAccountTransactionHistoryQuery query)
     {
         // Verify the account exists first - throw 404 if not
         var accountExists = await _context.Accounts
@@ -33,18 +33,18 @@ public class GetAccountTransactionHistoryQueryHandler
             .ThenByDescending(le => le.Id)  // Secondary sort by ID for deterministic ordering in same second
             .Skip((query.PageNumber - 1) * query.PageSize)
             .Take(query.PageSize)
-            .Select(le => new
+            .Select(le => new AccountTransactionHistoryItem
             {
-                le.Id,
-                le.TransactionId,
-                le.Amount,
-                le.EntryType,
-                le.CreatedAt,
+                Id = le.Id,
+                TransactionId = le.TransactionId,
+                Amount = le.Amount,
+                EntryType = le.EntryType,
+                CreatedAt = le.CreatedAt,
                 TransactionReference = le.Transaction != null ? le.Transaction.Reference : null
             })
             .ToListAsync();
 
-        return new PaginatedResult
+        return new PaginatedResult<AccountTransactionHistoryItem>
         {
             Items = entries,
             TotalCount = totalCount,
@@ -54,9 +54,9 @@ public class GetAccountTransactionHistoryQueryHandler
     }
 }
 
-public class PaginatedResult
+public class PaginatedResult<T>
 {
-    public IEnumerable<dynamic> Items { get; set; } = new List<dynamic>();
+    public IEnumerable<T> Items { get; set; } = new List<T>();
     public int TotalCount { get; set; }
     public int PageNumber { get; set; }
     public int PageSize { get; set; }
