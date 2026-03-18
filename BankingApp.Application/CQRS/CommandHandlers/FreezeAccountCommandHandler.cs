@@ -1,6 +1,7 @@
 using BankingApp.Domain.Entities;
 using BankingApp.Infrastructure.Data;
 using BankingApp.Application.Exceptions;
+using BankingApp.Application.DTOs;
 
 namespace BankingApp.Application.CQRS.CommandHandlers;
 
@@ -13,7 +14,7 @@ public class FreezeAccountCommandHandler
         _context = context;
     }
 
-    public async Task<Account> HandleAsync(Commands.FreezeAccountCommand command)
+    public async Task<AccountDto> HandleAsync(Commands.FreezeAccountCommand command)
     {
         if (command.AccountId == Guid.Empty)
             throw new ArgumentException("Account ID is required.");
@@ -32,6 +33,14 @@ public class FreezeAccountCommandHandler
 
         await _context.SaveChangesAsync();
 
-        return account;
+        return new AccountDto
+        {
+            Id = account.Id,
+            CustomerId = account.CustomerId,
+            AccountNumber = account.AccountNumber,
+            Currency = account.Currency,
+            Status = account.Status,
+            CreatedAt = account.CreatedAt
+        };
     }
 }
