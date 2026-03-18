@@ -15,17 +15,29 @@ public class AccountsController : ControllerBase
     private readonly GetAccountBalanceQueryHandler _getBalanceHandler;
     private readonly GetAccountDetailQueryHandler _getDetailHandler;
     private readonly GetAccountTransactionHistoryQueryHandler _getTransactionsHandler;
+    private readonly ListAccountsQueryHandler _listAccountsHandler;
+    private readonly UpdateAccountCommandHandler _updateAccountHandler;
+    private readonly FreezeAccountCommandHandler _freezeAccountHandler;
+    private readonly UnfreezeAccountCommandHandler _unfreezeAccountHandler;
 
     public AccountsController(
         CreateAccountCommandHandler createAccountHandler,
         GetAccountBalanceQueryHandler getBalanceHandler,
         GetAccountDetailQueryHandler getDetailHandler,
-        GetAccountTransactionHistoryQueryHandler getTransactionsHandler)
+        GetAccountTransactionHistoryQueryHandler getTransactionsHandler,
+        ListAccountsQueryHandler listAccountsHandler,
+        UpdateAccountCommandHandler updateAccountHandler,
+        FreezeAccountCommandHandler freezeAccountHandler,
+        UnfreezeAccountCommandHandler unfreezeAccountHandler)
     {
         _createAccountHandler = createAccountHandler;
         _getBalanceHandler = getBalanceHandler;
         _getDetailHandler = getDetailHandler;
         _getTransactionsHandler = getTransactionsHandler;
+        _listAccountsHandler = listAccountsHandler;
+        _updateAccountHandler = updateAccountHandler;
+        _freezeAccountHandler = freezeAccountHandler;
+        _unfreezeAccountHandler = unfreezeAccountHandler;
     }
 
     /// <summary>
@@ -41,6 +53,34 @@ public class AccountsController : ControllerBase
     {
         var account = await _createAccountHandler.HandleAsync(command);
         return CreatedAtAction(nameof(GetAccountDetails), new { id = account.Id }, account);
+    }
+
+    /// <summary>
+    /// List all accounts with optional customer filtering and pagination
+    /// </summary>
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> ListAccounts(
+        [FromQuery] Guid? customerId,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        if (pageNumber <= 0)
+            throw new ArgumentException("pageNumber must be greater than 0");
+
+        if (pageSize <= 0 || pageSize > 100)
+            throw new ArgumentException("pageSize must be between 1 and 100");
+
+        var query = new ListAccountsQuery 
+        { 
+            CustomerId = customerId,
+            PageNumber = pageNumber, 
+            PageSize = pageSize 
+        };
+        var result = await _listAccountsHandler.HandleAsync(query);
+        return Ok(result);
     }
 
     /// <summary>
@@ -99,5 +139,53 @@ public class AccountsController : ControllerBase
         };
         var result = await _getTransactionsHandler.HandleAsync(query);
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Update an existing account
+    /// </summary>
+    [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> UpdateAccount(Guid id, [FromBody] UpdateAccountCommand command)
+    {
+        command.AccountId = id;
+        var account = await _updateAccountHandler.HandleAsync(command);
+        return Ok(account);
+    }
+
+    /// <summary>
+    /// Freeze an account (prevent transactions)
+    /// </summary>
+    [HttpPost("{id}/freeze")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> FreezeAccount(Guid id)
+    {
+        var command = new FreezeAccountCommand { AccountId = id };
+        var account = await _freezeAccountHandler.HandleAsync(command);
+        return Ok(new { message = "Account frozen successfully", account });
+    }
+
+    /// <summary>
+    /// Unfreeze an account (allow transactions)
+    /// </summary>
+    [HttpPost("{id}/unfreeze")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> UnfreezeAccount(Guid id)
+    {
+        var command = new UnfreezeAccountCommand { AccountId = id };
+        var account = await _unfreezeAccountHandler.HandleAsync(command);
+        return Ok(new { message = "Account unfrozen successfully", account });
     }
 }

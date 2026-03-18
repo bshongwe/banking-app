@@ -13,13 +13,41 @@ public class CustomersController : ControllerBase
 {
     private readonly CreateCustomerCommandHandler _createCustomerHandler;
     private readonly GetCustomerQueryHandler _getCustomerHandler;
+    private readonly ListCustomersQueryHandler _listCustomersHandler;
+    private readonly UpdateCustomerCommandHandler _updateCustomerHandler;
 
     public CustomersController(
         CreateCustomerCommandHandler createCustomerHandler,
-        GetCustomerQueryHandler getCustomerHandler)
+        GetCustomerQueryHandler getCustomerHandler,
+        ListCustomersQueryHandler listCustomersHandler,
+        UpdateCustomerCommandHandler updateCustomerHandler)
     {
         _createCustomerHandler = createCustomerHandler;
         _getCustomerHandler = getCustomerHandler;
+        _listCustomersHandler = listCustomersHandler;
+        _updateCustomerHandler = updateCustomerHandler;
+    }
+
+    /// <summary>
+    /// List all customers with pagination
+    /// </summary>
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> ListCustomers(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        if (pageNumber <= 0)
+            throw new ArgumentException("pageNumber must be greater than 0");
+
+        if (pageSize <= 0 || pageSize > 100)
+            throw new ArgumentException("pageSize must be between 1 and 100");
+
+        var query = new ListCustomersQuery { PageNumber = pageNumber, PageSize = pageSize };
+        var result = await _listCustomersHandler.HandleAsync(query);
+        return Ok(result);
     }
 
     /// <summary>
@@ -48,5 +76,21 @@ public class CustomersController : ControllerBase
     {
         var customer = await _createCustomerHandler.HandleAsync(command);
         return CreatedAtAction(nameof(GetCustomerById), new { id = customer.Id }, customer);
+    }
+
+    /// <summary>
+    /// Update an existing customer
+    /// </summary>
+    [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> UpdateCustomer(Guid id, [FromBody] UpdateCustomerCommand command)
+    {
+        command.CustomerId = id;
+        var customer = await _updateCustomerHandler.HandleAsync(command);
+        return Ok(customer);
     }
 }

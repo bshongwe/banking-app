@@ -1,6 +1,123 @@
 @BankingApp.Api_HostAddress = http://localhost:5242
 
-GET {{BankingApp.Api_HostAddress}}/weatherforecast/
+### List Customers with Pagination
+GET {{BankingApp.Api_HostAddress}}/api/customers?pageNumber=1&pageSize=10
 Accept: application/json
 
 ###
+
+### Get Customer by ID
+GET {{BankingApp.Api_HostAddress}}/api/customers/{id}
+Accept: application/json
+
+###
+
+### Create Customer
+POST {{BankingApp.Api_HostAddress}}/api/customers
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john.doe@example.com"
+}
+
+###
+
+### Update Customer
+PUT {{BankingApp.Api_HostAddress}}/api/customers/{id}
+Content-Type: application/json
+
+{
+  "firstName": "Jane",
+  "lastName": "Smith",
+  "email": "jane.smith@example.com"
+}
+
+###
+
+### List Accounts with Pagination (all accounts)
+GET {{BankingApp.Api_HostAddress}}/api/accounts?pageNumber=1&pageSize=10
+Accept: application/json
+
+###
+
+### List Accounts by Customer ID
+GET {{BankingApp.Api_HostAddress}}/api/accounts?customerId={customerId}&pageNumber=1&pageSize=10
+Accept: application/json
+
+###
+
+### Get Account Details
+GET {{BankingApp.Api_HostAddress}}/api/accounts/{id}
+Accept: application/json
+
+###
+
+### Get Account Balance
+GET {{BankingApp.Api_HostAddress}}/api/accounts/{id}/balance
+Accept: application/json
+
+###
+
+### Get Account Transaction History
+GET {{BankingApp.Api_HostAddress}}/api/accounts/{id}/transactions?pageNumber=1&pageSize=10
+Accept: application/json
+
+###
+
+### Create Account
+POST {{BankingApp.Api_HostAddress}}/api/accounts
+Content-Type: application/json
+
+{
+  "customerId": "{customerId}",
+  "accountNumber": "ACC001",
+  "initialBalance": 1000.00,
+  "currency": "USD"
+}
+
+###
+
+### Update Account
+PUT {{BankingApp.Api_HostAddress}}/api/accounts/{id}
+Content-Type: application/json
+
+{
+  "accountNumber": "ACC001-UPDATED"
+}
+
+###
+
+### Freeze Account
+POST {{BankingApp.Api_HostAddress}}/api/accounts/{id}/freeze
+
+###
+
+### Unfreeze Account
+POST {{BankingApp.Api_HostAddress}}/api/accounts/{id}/unfreeze
+
+###
+
+### List Transfers with Pagination (all transfers)
+GET {{BankingApp.Api_HostAddress}}/api/transfers?pageNumber=1&pageSize=10
+Accept: application/json
+
+###
+
+### List Transfers by Account ID
+GET {{BankingApp.Api_HostAddress}}/api/transfers?accountId={accountId}&pageNumber=1&pageSize=10
+Accept: application/json
+
+###
+
+### Transfer Money
+POST {{BankingApp.Api_HostAddress}}/api/transfers
+Content-Type: application/json
+
+{
+  "sourceAccountId": "{sourceAccountId}",
+  "destinationAccountId": "{destinationAccountId}",
+  "amount": 100.00,
+  "reference": "Payment for services"
+}

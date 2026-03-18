@@ -68,12 +68,19 @@ builder.Services.AddScoped<ITransferService, TransferService>();
 builder.Services.AddScoped<TransferMoneyCommandHandler>();
 builder.Services.AddScoped<CreateAccountCommandHandler>();
 builder.Services.AddScoped<CreateCustomerCommandHandler>();
+builder.Services.AddScoped<UpdateAccountCommandHandler>();
+builder.Services.AddScoped<UpdateCustomerCommandHandler>();
+builder.Services.AddScoped<FreezeAccountCommandHandler>();
+builder.Services.AddScoped<UnfreezeAccountCommandHandler>();
 
 // Register CQRS Query Handlers
 builder.Services.AddScoped<GetAccountBalanceQueryHandler>();
 builder.Services.AddScoped<GetAccountDetailQueryHandler>();
 builder.Services.AddScoped<GetAccountTransactionHistoryQueryHandler>();
 builder.Services.AddScoped<GetCustomerQueryHandler>();
+builder.Services.AddScoped<ListCustomersQueryHandler>();
+builder.Services.AddScoped<ListAccountsQueryHandler>();
+builder.Services.AddScoped<ListTransfersQueryHandler>();
 
 var app = builder.Build();
 

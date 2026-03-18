@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using BankingApp.Application.CQRS.Commands;
 using BankingApp.Application.CQRS.CommandHandlers;
+using BankingApp.Application.CQRS.Queries;
+using BankingApp.Application.CQRS.QueryHandlers;
 using BankingApp.Application.Exceptions;
 using BankingApp.Application.DTOs;
 
@@ -11,10 +13,14 @@ namespace BankingApp.Api.Controllers;
 public class TransfersController : ControllerBase
 {
     private readonly TransferMoneyCommandHandler _transferHandler;
+    private readonly ListTransfersQueryHandler _listTransfersHandler;
 
-    public TransfersController(TransferMoneyCommandHandler transferHandler)
+    public TransfersController(
+        TransferMoneyCommandHandler transferHandler,
+        ListTransfersQueryHandler listTransfersHandler)
     {
         _transferHandler = transferHandler;
+        _listTransfersHandler = listTransfersHandler;
     }
 
     /// <summary>
@@ -41,5 +47,36 @@ public class TransfersController : ControllerBase
             reference = transaction.Reference,
             createdAt = transaction.CreatedAt
         });
+    }
+
+    /// <summary>
+    /// List all transfers with optional account filtering and pagination
+    /// </summary>
+    /// <remarks>
+    /// When accountId is provided, returns transfers where the account is either the source or destination.
+    /// </remarks>
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> ListTransfers(
+        [FromQuery] Guid? accountId,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        if (pageNumber <= 0)
+            throw new ArgumentException("pageNumber must be greater than 0");
+
+        if (pageSize <= 0 || pageSize > 100)
+            throw new ArgumentException("pageSize must be between 1 and 100");
+
+        var query = new ListTransfersQuery 
+        { 
+            AccountId = accountId,
+            PageNumber = pageNumber, 
+            PageSize = pageSize 
+        };
+        var result = await _listTransfersHandler.HandleAsync(query);
+        return Ok(result);
     }
 }
