@@ -15,17 +15,20 @@ public class AccountsController : ControllerBase
     private readonly GetAccountBalanceQueryHandler _getBalanceHandler;
     private readonly GetAccountDetailQueryHandler _getDetailHandler;
     private readonly GetAccountTransactionHistoryQueryHandler _getTransactionsHandler;
+    private readonly ListAccountsQueryHandler _listAccountsHandler;
 
     public AccountsController(
         CreateAccountCommandHandler createAccountHandler,
         GetAccountBalanceQueryHandler getBalanceHandler,
         GetAccountDetailQueryHandler getDetailHandler,
-        GetAccountTransactionHistoryQueryHandler getTransactionsHandler)
+        GetAccountTransactionHistoryQueryHandler getTransactionsHandler,
+        ListAccountsQueryHandler listAccountsHandler)
     {
         _createAccountHandler = createAccountHandler;
         _getBalanceHandler = getBalanceHandler;
         _getDetailHandler = getDetailHandler;
         _getTransactionsHandler = getTransactionsHandler;
+        _listAccountsHandler = listAccountsHandler;
     }
 
     /// <summary>
@@ -41,6 +44,34 @@ public class AccountsController : ControllerBase
     {
         var account = await _createAccountHandler.HandleAsync(command);
         return CreatedAtAction(nameof(GetAccountDetails), new { id = account.Id }, account);
+    }
+
+    /// <summary>
+    /// List all accounts with optional customer filtering and pagination
+    /// </summary>
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> ListAccounts(
+        [FromQuery] Guid? customerId,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        if (pageNumber <= 0)
+            throw new ArgumentException("pageNumber must be greater than 0");
+
+        if (pageSize <= 0 || pageSize > 100)
+            throw new ArgumentException("pageSize must be between 1 and 100");
+
+        var query = new ListAccountsQuery 
+        { 
+            CustomerId = customerId,
+            PageNumber = pageNumber, 
+            PageSize = pageSize 
+        };
+        var result = await _listAccountsHandler.HandleAsync(query);
+        return Ok(result);
     }
 
     /// <summary>

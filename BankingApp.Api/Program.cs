@@ -74,6 +74,9 @@ builder.Services.AddScoped<GetAccountBalanceQueryHandler>();
 builder.Services.AddScoped<GetAccountDetailQueryHandler>();
 builder.Services.AddScoped<GetAccountTransactionHistoryQueryHandler>();
 builder.Services.AddScoped<GetCustomerQueryHandler>();
+builder.Services.AddScoped<ListCustomersQueryHandler>();
+builder.Services.AddScoped<ListAccountsQueryHandler>();
+builder.Services.AddScoped<ListTransfersQueryHandler>();
 
 var app = builder.Build();
 
