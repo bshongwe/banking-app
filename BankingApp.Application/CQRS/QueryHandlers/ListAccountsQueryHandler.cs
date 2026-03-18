@@ -31,6 +31,7 @@ public class ListAccountsQueryHandler
 
         var accounts = await baseQuery
             .OrderBy(a => a.CreatedAt)
+            .ThenBy(a => a.Id)
             .Skip((query.PageNumber - 1) * query.PageSize)
             .Take(query.PageSize)
             .Select(a => new

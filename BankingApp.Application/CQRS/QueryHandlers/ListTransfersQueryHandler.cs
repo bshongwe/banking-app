@@ -42,6 +42,8 @@ public class ListTransfersQueryHandler
             {
                 t.Id,
                 t.Reference,
+                // Assumes exactly one Debit and one Credit entry per Transaction
+                // If this assumption is violated, amount may be incorrect or accounts misrepresented
                 Amount = t.LedgerEntries
                     .Where(le => le.EntryType == "Debit")
                     .Sum(le => le.Amount),
