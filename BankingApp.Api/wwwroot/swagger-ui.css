@@ -93,11 +93,12 @@ body {
 
 .btn-send {
   background: #4CAF50;
-  color: white;
+  color: #000;
 }
 
 .btn-send:hover {
   background: #45a049;
+  color: #000;
 }
 
 .btn-clear {
@@ -141,5 +142,5 @@ body {
 
 .method.put {
   background: #ffe0b2;
-  color: #e65100;
+  color: #d84315;
 }
