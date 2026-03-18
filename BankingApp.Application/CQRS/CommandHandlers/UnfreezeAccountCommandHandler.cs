@@ -30,7 +30,6 @@ public class UnfreezeAccountCommandHandler
 
         account.Status = "Active";
 
-        _context.Accounts.Update(account);
         await _context.SaveChangesAsync();
 
         return account;

@@ -15,7 +15,7 @@ namespace BankingApp.Infrastructure.Migrations
                 table: "Accounts",
                 type: "TEXT",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: "Active");
         }
 
         /// <inheritdoc />

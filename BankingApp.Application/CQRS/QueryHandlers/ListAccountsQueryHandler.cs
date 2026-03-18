@@ -14,6 +14,13 @@ public class ListAccountsQueryHandler
 
     public async Task<dynamic> HandleAsync(Queries.ListAccountsQuery query)
     {
+        // Validate pagination parameters
+        if (query.PageNumber <= 0)
+            throw new ArgumentException("PageNumber must be greater than 0");
+        
+        if (query.PageSize <= 0 || query.PageSize > 100)
+            throw new ArgumentException("PageSize must be between 1 and 100");
+
         var baseQuery = _context.Accounts.AsQueryable();
 
         // Filter by customer if provided
@@ -32,7 +39,9 @@ public class ListAccountsQueryHandler
                 a.AccountNumber,
                 a.Currency,
                 a.CreatedAt,
-                CustomerName = $"{a.Customer!.FirstName} {a.Customer.LastName}"
+                CustomerName = a.Customer != null 
+                    ? $"{a.Customer.FirstName} {a.Customer.LastName}".Trim()
+                    : "Unknown"
             })
             .ToListAsync();
 

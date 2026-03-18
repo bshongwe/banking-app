@@ -36,7 +36,7 @@ public class UpdateCustomerCommandHandler
 
         var customer = await _context.Customers.FindAsync(command.CustomerId);
         if (customer == null)
-            throw new ResourceNotFoundException("Customer");
+            throw new ResourceNotFoundException("Customer", command.CustomerId);
 
         // Check for duplicate email if email has changed
         if (customer.Email != command.Email)

@@ -14,6 +14,13 @@ public class ListCustomersQueryHandler
 
     public async Task<dynamic> HandleAsync(Queries.ListCustomersQuery query)
     {
+        // Validate pagination parameters
+        if (query.PageNumber <= 0)
+            throw new ArgumentException("PageNumber must be greater than 0");
+        
+        if (query.PageSize <= 0 || query.PageSize > 100)
+            throw new ArgumentException("PageSize must be between 1 and 100");
+
         var totalCount = await _context.Customers.CountAsync();
 
         var customers = await _context.Customers

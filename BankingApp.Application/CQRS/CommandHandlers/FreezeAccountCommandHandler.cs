@@ -30,7 +30,6 @@ public class FreezeAccountCommandHandler
 
         account.Status = "Frozen";
 
-        _context.Accounts.Update(account);
         await _context.SaveChangesAsync();
 
         return account;

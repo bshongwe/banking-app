@@ -402,9 +402,9 @@ curl -v http://localhost:5242/api/customers
    lsof -i :5242
    ```
 
-2. If not running, start it:
+2. If not running, start it (from your project directory):
    ```bash
-   cd /Users/ernie-dev/Documents/banking-app
+   cd /path/to/banking-app
    dotnet run --project BankingApp.Api
    ```
 

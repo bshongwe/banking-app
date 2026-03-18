@@ -1,5 +1,4 @@
 using BankingApp.Domain.Entities;
-using BankingApp.Infrastructure.Repositories;
 using BankingApp.Application.Exceptions;
 using BankingApp.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
