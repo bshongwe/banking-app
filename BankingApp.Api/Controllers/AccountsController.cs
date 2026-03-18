@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using BankingApp.Application.CQRS.Commands;
-using BankingApp.Application.CQRS.CommandHandlers;
 using BankingApp.Application.CQRS.Queries;
-using BankingApp.Application.CQRS.QueryHandlers;
 using BankingApp.Application.DTOs;
+using BankingApp.Api.Handlers;
 
 namespace BankingApp.Api.Controllers;
 
@@ -11,33 +10,15 @@ namespace BankingApp.Api.Controllers;
 [Route("api/[controller]")]
 public class AccountsController : ControllerBase
 {
-    private readonly CreateAccountCommandHandler _createAccountHandler;
-    private readonly GetAccountBalanceQueryHandler _getBalanceHandler;
-    private readonly GetAccountDetailQueryHandler _getDetailHandler;
-    private readonly GetAccountTransactionHistoryQueryHandler _getTransactionsHandler;
-    private readonly ListAccountsQueryHandler _listAccountsHandler;
-    private readonly UpdateAccountCommandHandler _updateAccountHandler;
-    private readonly FreezeAccountCommandHandler _freezeAccountHandler;
-    private readonly UnfreezeAccountCommandHandler _unfreezeAccountHandler;
+    private readonly AccountCommandHandlers _commands;
+    private readonly AccountQueryHandlers _queries;
 
     public AccountsController(
-        CreateAccountCommandHandler createAccountHandler,
-        GetAccountBalanceQueryHandler getBalanceHandler,
-        GetAccountDetailQueryHandler getDetailHandler,
-        GetAccountTransactionHistoryQueryHandler getTransactionsHandler,
-        ListAccountsQueryHandler listAccountsHandler,
-        UpdateAccountCommandHandler updateAccountHandler,
-        FreezeAccountCommandHandler freezeAccountHandler,
-        UnfreezeAccountCommandHandler unfreezeAccountHandler)
+        AccountCommandHandlers commands,
+        AccountQueryHandlers queries)
     {
-        _createAccountHandler = createAccountHandler;
-        _getBalanceHandler = getBalanceHandler;
-        _getDetailHandler = getDetailHandler;
-        _getTransactionsHandler = getTransactionsHandler;
-        _listAccountsHandler = listAccountsHandler;
-        _updateAccountHandler = updateAccountHandler;
-        _freezeAccountHandler = freezeAccountHandler;
-        _unfreezeAccountHandler = unfreezeAccountHandler;
+        _commands = commands;
+        _queries = queries;
     }
 
     /// <summary>
@@ -51,7 +32,7 @@ public class AccountsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> CreateAccount([FromBody] CreateAccountCommand command)
     {
-        var account = await _createAccountHandler.HandleAsync(command);
+        var account = await _commands.Create.HandleAsync(command);
         return CreatedAtAction(nameof(GetAccountDetails), new { id = account.Id }, account);
     }
 
@@ -79,7 +60,7 @@ public class AccountsController : ControllerBase
             PageNumber = pageNumber, 
             PageSize = pageSize 
         };
-        var result = await _listAccountsHandler.HandleAsync(query);
+        var result = await _queries.List.HandleAsync(query);
         return Ok(result);
     }
 
@@ -93,7 +74,7 @@ public class AccountsController : ControllerBase
     public async Task<IActionResult> GetAccountDetails(Guid id)
     {
         var query = new GetAccountDetailQuery { AccountId = id };
-        var account = await _getDetailHandler.HandleAsync(query);
+        var account = await _queries.GetDetail.HandleAsync(query);
         return Ok(account);
     }
 
@@ -107,7 +88,7 @@ public class AccountsController : ControllerBase
     public async Task<IActionResult> GetAccountBalance(Guid id)
     {
         var query = new GetAccountBalanceQuery { AccountId = id };
-        var balance = await _getBalanceHandler.HandleAsync(query);
+        var balance = await _queries.GetBalance.HandleAsync(query);
         return Ok(new { accountId = id, balance });
     }
 
@@ -137,7 +118,7 @@ public class AccountsController : ControllerBase
             PageNumber = pageNumber,
             PageSize = pageSize
         };
-        var result = await _getTransactionsHandler.HandleAsync(query);
+        var result = await _queries.GetTransactions.HandleAsync(query);
         return Ok(result);
     }
 
@@ -153,7 +134,7 @@ public class AccountsController : ControllerBase
     public async Task<IActionResult> UpdateAccount(Guid id, [FromBody] UpdateAccountCommand command)
     {
         command.AccountId = id;
-        var account = await _updateAccountHandler.HandleAsync(command);
+        var account = await _commands.Update.HandleAsync(command);
         return Ok(account);
     }
 
@@ -169,7 +150,7 @@ public class AccountsController : ControllerBase
     public async Task<IActionResult> FreezeAccount(Guid id)
     {
         var command = new FreezeAccountCommand { AccountId = id };
-        var account = await _freezeAccountHandler.HandleAsync(command);
+        var account = await _commands.Freeze.HandleAsync(command);
         return Ok(new { message = "Account frozen successfully", account });
     }
 
@@ -185,7 +166,7 @@ public class AccountsController : ControllerBase
     public async Task<IActionResult> UnfreezeAccount(Guid id)
     {
         var command = new UnfreezeAccountCommand { AccountId = id };
-        var account = await _unfreezeAccountHandler.HandleAsync(command);
+        var account = await _commands.Unfreeze.HandleAsync(command);
         return Ok(new { message = "Account unfrozen successfully", account });
     }
 }

@@ -6,6 +6,7 @@ using BankingApp.Application.CQRS.QueryHandlers;
 using BankingApp.Application.Validators;
 using BankingApp.Application.UnitOfWork;
 using BankingApp.Api.Middleware;
+using BankingApp.Api.Handlers;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -82,6 +83,10 @@ builder.Services.AddScoped<ListCustomersQueryHandler>();
 builder.Services.AddScoped<ListAccountsQueryHandler>();
 builder.Services.AddScoped<ListTransfersQueryHandler>();
 
+// Register Handler Registries
+builder.Services.AddScoped<AccountCommandHandlers>();
+builder.Services.AddScoped<AccountQueryHandlers>();
+
 var app = builder.Build();
 
 // Apply migrations automatically on startup (Development environment only)
@@ -98,6 +103,7 @@ if (app.Environment.IsDevelopment())
         {
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
             logger.LogError(ex, "An error occurred while migrating the database");
+            // Rethrow to fail fast on startup if migrations cannot be applied
             throw;
         }
     }
@@ -129,4 +135,4 @@ app.UseStaticFiles();
 // Map controllers
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();
