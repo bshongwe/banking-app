@@ -2,6 +2,7 @@ using BankingApp.Domain.Entities;
 using BankingApp.Infrastructure.Repositories;
 using BankingApp.Application.UnitOfWork;
 using BankingApp.Application.Exceptions;
+using BankingApp.Application.DTOs;
 using BankingApp.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,7 +27,7 @@ public class CreateAccountCommandHandler
         _context = context;
     }
 
-    public async Task<Account> HandleAsync(Commands.CreateAccountCommand command)
+    public async Task<AccountDto> HandleAsync(Commands.CreateAccountCommand command)
     {
         if (string.IsNullOrWhiteSpace(command.AccountNumber))
             throw new ArgumentException("Account number is required.");
@@ -80,7 +81,15 @@ public class CreateAccountCommandHandler
             if (!commitSucceeded)
                 throw new InvalidOperationException("Failed to commit the account creation transaction. The operation was rolled back.");
 
-            return account;
+            return new AccountDto
+            {
+                Id = account.Id,
+                CustomerId = account.CustomerId,
+                AccountNumber = account.AccountNumber,
+                Currency = account.Currency,
+                Status = account.Status,
+                CreatedAt = account.CreatedAt
+            };
         }
         catch (DbUpdateException ex) when (
             ex.InnerException?.Message.Contains(

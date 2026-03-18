@@ -3,7 +3,6 @@ using BankingApp.Application.CQRS.Commands;
 using BankingApp.Application.CQRS.CommandHandlers;
 using BankingApp.Application.CQRS.Queries;
 using BankingApp.Application.CQRS.QueryHandlers;
-using BankingApp.Application.Exceptions;
 using BankingApp.Application.DTOs;
 
 namespace BankingApp.Api.Controllers;
@@ -54,6 +53,8 @@ public class TransfersController : ControllerBase
     /// </summary>
     /// <remarks>
     /// When accountId is provided, returns transfers where the account is either the source or destination.
+    /// Results are paginated with configurable page size (1-100 items per page).
+    /// This endpoint is provided for backward compatibility. Prefer GET /api/transfer-history for new clients.
     /// </remarks>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]

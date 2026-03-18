@@ -1,5 +1,6 @@
 using BankingApp.Domain.Entities;
 using BankingApp.Application.Exceptions;
+using BankingApp.Application.DTOs;
 using BankingApp.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,7 +15,7 @@ public class UpdateAccountCommandHandler
         _context = context;
     }
 
-    public async Task<Account> HandleAsync(Commands.UpdateAccountCommand command)
+    public async Task<AccountDto> HandleAsync(Commands.UpdateAccountCommand command)
     {
         if (command.AccountId == Guid.Empty)
             throw new ArgumentException("Account ID is required.");
@@ -47,6 +48,14 @@ public class UpdateAccountCommandHandler
             throw new DuplicateAccountNumberException(command.AccountNumber);
         }
 
-        return account;
+        return new AccountDto
+        {
+            Id = account.Id,
+            CustomerId = account.CustomerId,
+            AccountNumber = account.AccountNumber,
+            Currency = account.Currency,
+            Status = account.Status,
+            CreatedAt = account.CreatedAt
+        };
     }
 }
