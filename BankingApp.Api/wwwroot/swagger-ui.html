@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Banking App API - Interactive Console</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+    <link rel="stylesheet" href="swagger-ui.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Banking App API - Interactive Console</h1>
+        <button class="theme-toggle" onclick="toggleTheme()">
+            <span id="themeIcon">🌙</span>
+            <span id="themeLabel">Dark</span>
+        </button>
+    </div>
+    
+    <div class="main-container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <!-- Customers Section -->
+            <div class="sidebar-section">
+                <button class="sidebar-toggle" onclick="toggleSection(this)">
+                    <span class="toggle-icon">▼</span>
+                    <h3 class="sidebar-title">Customers</h3>
+                </button>
+                <div class="section-content">
+                    <a class="endpoint-link" onclick="loadEndpoint('GET', '/api/customers?pageNumber=1&pageSize=10', '')">
+                        <span class="method-badge get">GET</span> List All
+                    </a>
+                    <a class="endpoint-link" onclick="loadEndpoint('POST', '/api/customers', JSON.stringify({firstName: 'John', lastName: 'Doe', email: 'john@example.com'}))">
+                        <span class="method-badge post">POST</span> Create New
+                    </a>
+                    <a class="endpoint-link" onclick="loadEndpoint('GET', '/api/customers/{id}', '')">
+                        <span class="method-badge get">GET</span> Get Detail
+                    </a>
+                </div>
+            </div>
+
+            <!-- Accounts Section -->
+            <div class="sidebar-section">
+                <button class="sidebar-toggle" onclick="toggleSection(this)">
+                    <span class="toggle-icon">▼</span>
+                    <h3 class="sidebar-title">Accounts</h3>
+                </button>
+                <div class="section-content">
+                    <a class="endpoint-link" onclick="loadEndpoint('GET', '/api/accounts?pageNumber=1&pageSize=10', '')">
+                        <span class="method-badge get">GET</span> List All
+                    </a>
+                    <a class="endpoint-link" onclick="loadEndpoint('POST', '/api/accounts', JSON.stringify({customerId: 'ID', accountNumber: 'ACC-001', currency: 'USD'}))">
+                        <span class="method-badge post">POST</span> Create New
+                    </a>
+                    <a class="endpoint-link" onclick="loadEndpoint('GET', '/api/accounts/{id}/balance', '')">
+                        <span class="method-badge get">GET</span> Get Balance
+                    </a>
+                    <a class="endpoint-link" onclick="loadEndpoint('PUT', '/api/accounts/{id}', JSON.stringify({status: 'Active'}))">
+                        <span class="method-badge put">PUT</span> Update
+                    </a>
+                    <a class="endpoint-link" onclick="loadEndpoint('POST', '/api/accounts/{id}/freeze', '')">
+                        <span class="method-badge post">POST</span> Freeze
+                    </a>
+                    <a class="endpoint-link" onclick="loadEndpoint('POST', '/api/accounts/{id}/unfreeze', '')">
+                        <span class="method-badge post">POST</span> Unfreeze
+                    </a>
+                </div>
+            </div>
+
+            <!-- Transfers Section -->
+            <div class="sidebar-section">
+                <button class="sidebar-toggle" onclick="toggleSection(this)">
+                    <span class="toggle-icon">▼</span>
+                    <h3 class="sidebar-title">Transfers</h3>
+                </button>
+                <div class="section-content">
+                    <a class="endpoint-link" onclick="loadEndpoint('GET', '/api/transfer-history?pageNumber=1&pageSize=10', '')">
+                        <span class="method-badge get">GET</span> List All
+                    </a>
+                    <a class="endpoint-link" onclick="loadEndpoint('POST', '/api/transfers', JSON.stringify({fromAccountId: 'ID', toAccountId: 'ID', amount: 250, reference: 'Transfer'}))">
+                        <span class="method-badge post">POST</span> Create New
+                    </a>
+                    <a class="endpoint-link" onclick="loadEndpoint('GET', '/api/transfer-history?accountId={id}', '')">
+                        <span class="method-badge get">GET</span> Filter by Account
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="content">
+            <div class="container">
+                <div class="console">
+                    <h2 class="section-title">Request Builder</h2>
+                    
+                    <div class="form-group">
+                        <label for="method">HTTP Method</label>
+                        <select id="method">
+                            <option>GET</option>
+                            <option>POST</option>
+                            <option>PUT</option>
+                            <option>DELETE</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="url">URL</label>
+                        <input type="text" id="url" placeholder="/api/customers">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="body">Request Body (JSON)</label>
+                        <textarea id="body" placeholder='{"firstName": "John", "lastName": "Doe", "email": "john@example.com"}'></textarea>
+                    </div>
+
+                    <div class="button-row">
+                        <button class="btn-primary" onclick="sendRequest()">Send Request</button>
+                        <button class="btn-secondary" onclick="clearAll()">Clear All</button>
+                    </div>
+
+                    <div id="responseContainer" class="response-section" style="display: none;">
+                        <div class="response-title">Response</div>
+                        <div id="response" class="response"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function loadEndpoint(method, url, body) {
+            document.getElementById('method').value = method;
+            document.getElementById('url').value = url;
+            document.getElementById('body').value = body;
+            document.getElementById('responseContainer').style.display = 'none';
+        }
+
+        async function sendRequest() {
+            const method = document.getElementById('method').value;
+            const url = document.getElementById('url').value;
+            const body = document.getElementById('body').value;
+            const responseDiv = document.getElementById('response');
+            const container = document.getElementById('responseContainer');
+
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+
+            responseDiv.className = 'response loading';
+            responseDiv.textContent = 'Loading...';
+            container.style.display = 'block';
+
+            try {
+                const options = {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' }
+                };
+
+                if (body && (method === 'POST' || method === 'PUT')) {
+                    try {
+                        JSON.parse(body);
+                        options.body = body;
+                    } catch (e) {
+                        responseDiv.className = 'response error';
+                        responseDiv.textContent = 'Error: Invalid JSON in request body';
+                        return;
+                    }
+                }
+
+                const response = await fetch(`http://localhost:5242${url}`, options);
+                const data = await response.json();
+
+                responseDiv.className = 'response ' + (response.ok ? 'success' : 'error');
+                responseDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseDiv.className = 'response error';
+                responseDiv.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        function clearAll() {
+            document.getElementById('method').value = 'GET';
+            document.getElementById('url').value = '';
+            document.getElementById('body').value = '';
+            document.getElementById('responseContainer').style.display = 'none';
+        }
+
+        function toggleSection(button) {
+            const section = button.closest('.sidebar-section');
+            const content = section.querySelector('.section-content');
+            const icon = button.querySelector('.toggle-icon');
+            
+            content.classList.toggle('collapsed');
+            icon.textContent = content.classList.contains('collapsed') ? '▶' : '▼';
+        }
+
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateToggleText();
+        }
+
+        function updateToggleText() {
+            const isDark = document.body.classList.contains('dark-mode');
+            document.getElementById('themeIcon').textContent = isDark ? '☀️' : '🌙';
+            document.getElementById('themeLabel').textContent = isDark ? 'Light' : 'Dark';
+        }
+
+        // Load saved theme preference on page load
+        globalThis.addEventListener('load', () => {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark' || (!savedTheme && globalThis.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.body.classList.add('dark-mode');
+            }
+            updateToggleText();
+        });
+    </script>
+</body>
+</html>
