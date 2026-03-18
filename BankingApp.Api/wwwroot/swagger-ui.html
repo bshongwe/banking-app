@@ -81,6 +81,7 @@
                     } catch (e) {
                         responseStatus.textContent = 'Error: Invalid JSON';
                         responseBody.textContent = '';
+                        console.error('Failed to parse JSON body:', e);
                         return;
                     }
                 }
