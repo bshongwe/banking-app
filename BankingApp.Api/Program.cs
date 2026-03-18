@@ -102,9 +102,10 @@ if (app.Environment.IsDevelopment())
         catch (Exception ex)
         {
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-            logger.LogError(ex, "An error occurred while migrating the database");
-            // Rethrow to fail fast on startup if migrations cannot be applied
-            throw;
+            logger.LogError(ex, "An error occurred while migrating the database. Application startup failed.");
+            throw new InvalidOperationException(
+                "Database migration failed during startup. The application cannot continue without a valid database schema. " +
+                "Please check the logs above for details.", ex);
         }
     }
 }
