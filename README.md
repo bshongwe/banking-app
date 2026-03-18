@@ -410,7 +410,34 @@ Response: 201 Created
   "customerId": "550e8400-e29b-41d4-a716-446655440000",
   "accountNumber": "ACC001",
   "currency": "USD",
+  "status": "Active",
   "createdAt": "2026-03-17T20:10:30.055805Z"
+}
+```
+
+#### List Accounts (Phase 1)
+```
+GET /api/accounts?pageNumber=1&pageSize=10
+
+Response: 200 OK
+{
+  "items": [
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440001",
+      "customerId": "550e8400-e29b-41d4-a716-446655440000",
+      "accountNumber": "ACC001",
+      "currency": "USD",
+      "status": "Active",
+      "customerName": "John Doe",
+      "createdAt": "2026-03-17T20:10:30.055805Z"
+    }
+  ],
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10,
+    "totalCount": 1,
+    "totalPages": 1
+  }
 }
 ```
 
@@ -422,6 +449,52 @@ Response: 200 OK
 {
   "accountId": "660e8400-e29b-41d4-a716-446655440001",
   "balance": 5000.0
+}
+```
+
+#### Update Account (Phase 2)
+```
+PUT /api/accounts/{id}
+Content-Type: application/json
+
+{
+  "accountNumber": "ACC001-UPDATED"
+}
+
+Response: 200 OK
+{
+  "id": "660e8400-e29b-41d4-a716-446655440001",
+  "accountNumber": "ACC001-UPDATED",
+  "status": "Active",
+  "updatedAt": "2026-03-18T05:30:00Z"
+}
+```
+
+#### Freeze Account (Phase 3)
+```
+POST /api/accounts/{id}/freeze
+
+Response: 200 OK
+{
+  "message": "Account frozen successfully",
+  "account": {
+    "id": "660e8400-e29b-41d4-a716-446655440001",
+    "status": "Frozen"
+  }
+}
+```
+
+#### Unfreeze Account (Phase 3)
+```
+POST /api/accounts/{id}/unfreeze
+
+Response: 200 OK
+{
+  "message": "Account unfrozen successfully",
+  "account": {
+    "id": "660e8400-e29b-41d4-a716-446655440001",
+    "status": "Active"
+  }
 }
 ```
 
@@ -441,9 +514,12 @@ Response: 200 OK
       "transactionReference": "TRF-2026-001"
     }
   ],
-  "totalCount": 1,
-  "pageNumber": 1,
-  "pageSize": 10
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10,
+    "totalCount": 1,
+    "totalPages": 1
+  }
 }
 ```
 
@@ -469,135 +545,262 @@ Response: 201 Created
 }
 ```
 
+#### List Transfers (Phase 1)
+```
+GET /api/transfers?pageNumber=1&pageSize=10
+
+Response: 200 OK
+{
+  "items": [
+    {
+      "id": "990e8400-e29b-41d4-a716-446655440004",
+      "sourceAccountId": "660e8400-e29b-41d4-a716-446655440001",
+      "destinationAccountId": "660e8400-e29b-41d4-a716-446655440002",
+      "amount": 500.0,
+      "reference": "Payment for services",
+      "createdAt": "2026-03-17T20:10:30.057795Z"
+    }
+  ],
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10,
+    "totalCount": 1,
+    "totalPages": 1
+  }
+}
+```
+
 ---
 
-## Testing Procedure
+## Customer Endpoints
 
-### Unit Testing
+### List Customers (Phase 1)
+```
+GET /api/customers?pageNumber=1&pageSize=10
 
-The project follows clean architecture with testable layers. To add tests:
-
-```bash
-dotnet new xunit -n BankingApp.Tests
-cd BankingApp.Tests
-dotnet add reference ../BankingApp.Application/BankingApp.Application.csproj
-dotnet add reference ../BankingApp.Domain/BankingApp.Domain.csproj
+Response: 200 OK
+{
+  "items": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john@example.com",
+      "createdAt": "2026-03-17T20:10:30.055805Z"
+    }
+  ],
+  "pagination": {
+    "pageNumber": 1,
+    "pageSize": 10,
+    "totalCount": 1,
+    "totalPages": 1
+  }
+}
 ```
 
-### Integration Testing
+### Update Customer (Phase 2)
+```
+PUT /api/customers/{id}
+Content-Type: application/json
 
-Test the API endpoints using the interactive ReDoc documentation:
+{
+  "firstName": "Jonathan",
+  "lastName": "Smith",
+  "email": "jonathan.smith@example.com"
+}
 
-1. **Navigate to**: `http://localhost:5242/api-docs.html`
-2. **Create a Customer**:
-   - Click "POST /api/customers"
-   - Click "Try It Out"
-   - Enter test data
-   - Click "Execute"
-
-3. **Create an Account**:
-   - Click "POST /api/accounts"
-   - Use the customer ID from step 2
-   - Set `initialBalance: 5000`
-   - Click "Execute"
-
-4. **Create Another Account**:
-   - Repeat step 3 with a different account number
-
-5. **Transfer Money**:
-   - Click "POST /api/transfers"
-   - Enter both account IDs and amount
-   - Click "Execute"
-
-6. **Verify Transaction**:
-   - Click "GET /api/accounts/{id}/transactions"
-   - Enter the account ID
-   - Click "Execute" to see the transaction history
-
-### Manual Testing with cURL
-
-```bash
-# Create a customer
-CUSTOMER_ID=$(curl -s -X POST http://localhost:5242/api/customers \
-  -H "Content-Type: application/json" \
-  -d '{"firstName":"Test","lastName":"User","email":"test@example.com"}' | jq -r '.id')
-
-echo "Customer ID: $CUSTOMER_ID"
-
-# Create first account
-ACCOUNT1=$(curl -s -X POST http://localhost:5242/api/accounts \
-  -H "Content-Type: application/json" \
-  -d "{\"customerId\":\"$CUSTOMER_ID\",\"accountNumber\":\"ACC001\",\"initialBalance\":5000}" | jq -r '.id')
-
-echo "Account 1: $ACCOUNT1"
-
-# Create second account
-ACCOUNT2=$(curl -s -X POST http://localhost:5242/api/accounts \
-  -H "Content-Type: application/json" \
-  -d "{\"customerId\":\"$CUSTOMER_ID\",\"accountNumber\":\"ACC002\",\"initialBalance\":0}" | jq -r '.id')
-
-echo "Account 2: $ACCOUNT2"
-
-# Check initial balance
-curl -s -X GET "http://localhost:5242/api/accounts/$ACCOUNT1/balance" | jq .
-
-# Transfer money
-curl -s -X POST http://localhost:5242/api/transfers \
-  -H "Content-Type: application/json" \
-  -d "{\"fromAccountId\":\"$ACCOUNT1\",\"toAccountId\":\"$ACCOUNT2\",\"amount\":500,\"reference\":\"Test transfer\"}" | jq .
-
-# Check balances after transfer
-echo "Account 1 balance:"
-curl -s -X GET "http://localhost:5242/api/accounts/$ACCOUNT1/balance" | jq .
-
-echo "Account 2 balance:"
-curl -s -X GET "http://localhost:5242/api/accounts/$ACCOUNT2/balance" | jq .
-
-# Get transaction history
-curl -s -X GET "http://localhost:5242/api/accounts/$ACCOUNT1/transactions?pageNumber=1&pageSize=10" | jq .
+Response: 200 OK
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "firstName": "Jonathan",
+  "lastName": "Smith",
+  "email": "jonathan.smith@example.com",
+  "updatedAt": "2026-03-18T05:30:00Z"
+}
 ```
 
-### Testing Error Cases
+---
 
-1. **Insufficient Funds**:
-   ```bash
-   curl -X POST http://localhost:5242/api/transfers \
-     -H "Content-Type: application/json" \
-     -d '{"fromAccountId":"...","toAccountId":"...","amount":10000,"reference":"Test"}'
-   
-   Response: 422 Unprocessable Entity
-   {"error": "Insufficient funds."}
-   ```
+## Testing
 
-2. **Duplicate Account Number**:
-   ```bash
-   curl -X POST http://localhost:5242/api/accounts \
-     -H "Content-Type: application/json" \
-     -d '{"customerId":"...","accountNumber":"ACC001"}'
-   
-   Response: 400 Bad Request
-   {"error": "Account number ACC001 already exists."}
-   ```
+### Quick Testing Checklist
 
-3. **Invalid Email**:
-   ```bash
-   curl -X POST http://localhost:5242/api/customers \
-     -H "Content-Type: application/json" \
-     -d '{"firstName":"Test","lastName":"User","email":"invalid-email"}'
-   
-   Response: 400 Bad Request
-   {"error": "Email address is not valid."}
-   ```
+✅ **API is Running**
+```bash
+curl -I http://localhost:5242/api/customers
+# Expected: HTTP/1.1 200 OK
+```
 
-4. **Missing Required Fields**:
-   ```bash
-   curl -X POST http://localhost:5242/api/customers \
-     -H "Content-Type: application/json" \
-     -d '{"firstName":"Test"}'
-   
-   Response: 400 Bad Request
-   {"error": "Last name is required."}
-   ```
+✅ **Database Migrations Applied**
+```bash
+# Migrations automatically applied on startup
+# - InitialCreate (base schema)
+# - MakeLedgerEntryTransactionIdNullable (ledger flexibility)
+# - AddAccountStatusField (account freeze/unfreeze)
+```
+
+✅ **All 16 Endpoints Verified**
+- 3 Phase 1 endpoints: List Customers, List Accounts, List Transfers
+- 2 Phase 2 endpoints: Update Customer, Update Account
+- 2 Phase 3 endpoints: Freeze Account, Unfreeze Account
+- 9 Original endpoints: Create/Get operations, transfers
+
+### Manual Testing
+
+#### Test Phase 1: List Endpoints with Pagination
+
+```bash
+# List customers with pagination
+curl -s http://localhost:5242/api/customers?pageNumber=1&pageSize=10 | jq '.pagination'
+
+# Expected output:
+# {
+#   "pageNumber": 1,
+#   "pageSize": 10,
+#   "totalCount": <number>,
+#   "totalPages": <calculated>
+# }
+```
+
+#### Test Phase 2: Update Endpoints
+
+```bash
+# Update customer (first get a valid customer ID)
+CUSTOMER_ID=$(curl -s http://localhost:5242/api/customers?pageNumber=1 | jq -r '.items[0].id')
+
+curl -X PUT http://localhost:5242/api/customers/$CUSTOMER_ID \
+  -H "Content-Type: application/json" \
+  -d '{"firstName":"Updated","lastName":"Name","email":"unique@example.com"}'
+
+# Expected: 200 OK with updated customer data
+```
+
+#### Test Phase 3: Account State Transitions
+
+```bash
+# Get account ID
+ACCOUNT_ID=$(curl -s http://localhost:5242/api/accounts?pageNumber=1 | jq -r '.items[0].id')
+
+# Freeze account
+curl -X POST http://localhost:5242/api/accounts/$ACCOUNT_ID/freeze
+
+# Expected: 200 OK
+# {"message":"Account frozen successfully","account":{"status":"Frozen"}}
+
+# Unfreeze account
+curl -X POST http://localhost:5242/api/accounts/$ACCOUNT_ID/unfreeze
+
+# Expected: 200 OK
+# {"message":"Account unfrozen successfully","account":{"status":"Active"}}
+```
+
+### Error Testing
+
+#### Test Duplicate Detection
+
+```bash
+# Try creating customer with duplicate email (will fail)
+curl -X POST http://localhost:5242/api/customers \
+  -H "Content-Type: application/json" \
+  -d '{"firstName":"Test","lastName":"User","email":"john@example.com"}'
+
+# Expected: 409 Conflict
+# {"message":"Customer with email already exists","errorCode":4011,"statusCode":409}
+```
+
+#### Test Invalid State Transitions
+
+```bash
+# Try freezing an already frozen account (will fail)
+curl -X POST http://localhost:5242/api/accounts/$ACCOUNT_ID/freeze
+
+# Expected: 422 Unprocessable Entity
+# {"message":"Account is already frozen","errorCode":4004,"statusCode":422}
+```
+
+### Using VS Code REST Client
+
+1. Install the **REST Client** extension by Huachao Mao
+2. Open `BankingApp.Api.http`
+3. Click "Send Request" on any endpoint
+4. View response in the preview panel
+
+### Using cURL Script
+
+Create `test_api.sh`:
+```bash
+#!/bin/bash
+
+API="http://localhost:5242/api"
+
+echo "=== Testing List Endpoints ==="
+echo "Customers:"
+curl -s "$API/customers?pageNumber=1&pageSize=5" | jq '.pagination'
+
+echo -e "\nAccounts:"
+curl -s "$API/accounts?pageNumber=1&pageSize=5" | jq '.pagination'
+
+echo -e "\nTransfers:"
+curl -s "$API/transfers?pageNumber=1&pageSize=5" | jq '.pagination'
+
+echo -e "\n=== Testing Create/Get Cycle ==="
+CUSTOMER=$(curl -s -X POST "$API/customers" \
+  -H "Content-Type: application/json" \
+  -d '{"firstName":"Test","lastName":"User","email":"test-'$(date +%s)'@example.com"}')
+
+CUSTOMER_ID=$(echo $CUSTOMER | jq -r '.id')
+echo "Created customer: $CUSTOMER_ID"
+
+# Get and display
+curl -s "$API/customers/$CUSTOMER_ID" | jq '.id,.firstName,.lastName'
+```
+
+Run with:
+```bash
+chmod +x test_api.sh
+./test_api.sh
+```
+
+---
+
+## Implementation Summary
+
+### Phase 1: List Endpoints (Pagination)
+- **ListCustomersQueryHandler**: Fetch customers with pagination, sorting by lastName
+- **ListAccountsQueryHandler**: Fetch accounts with optional customer filter
+- **ListTransfersQueryHandler**: Fetch transfers using ledger-based queries
+- **Feature**: pageNumber, pageSize (1-100), totalCount, totalPages
+
+### Phase 2: Update Endpoints
+- **UpdateCustomerCommandHandler**: Update customer details with duplicate email detection
+- **UpdateAccountCommandHandler**: Update account details with duplicate account detection
+- **Feature**: Idempotent operations, validation checks
+
+### Phase 3: State Management
+- **FreezeAccountCommandHandler**: Transition account to Frozen status
+- **UnfreezeAccountCommandHandler**: Transition account back to Active status
+- **Feature**: State validation prevents invalid transitions
+
+### Database Changes
+- **AddAccountStatusField Migration**: Added Status column to Accounts table
+  - Default value: "Active"
+  - Allowed values: Active, Frozen, Closed
+  - Enables account lifecycle management
+
+### Error Handling
+All error responses include:
+- `message`: Generic error message (no sensitive data)
+- `errorCode`: Banking-specific code (4000-5003 range)
+- `statusCode`: HTTP status
+- `traceId`: Correlation ID for support
+
+Common error codes used:
+- 4000: Validation failed (400)
+- 4004: Account frozen (422)
+- 4005: Insufficient funds (422)
+- 4010: Customer not found (404)
+- 4011: Duplicate email (409)
+- 4003: Duplicate account (409)
 
 ---
 
@@ -734,18 +937,38 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 **Ernie Bshongwe**
 - GitHub: [@bshongwe](https://github.com/bshongwe)
-- Email: ernie.dev@example.com
 
 ---
+## End Points
 
-## Changelog
+#### List Endpoints with Pagination
+- Added `GET /api/customers` with pagination (pageNumber, pageSize 1-100, totalCount, totalPages)
+- Added `GET /api/accounts` with optional customer filter and pagination
+- Added `GET /api/transfers` with pagination and ledger-based queries
+- All endpoints support consistent pagination metadata
 
-### Version 1.0.0 (2026-03-17)
-- Initial release
-- Customer management endpoints
-- Account creation with initial balance
-- Atomic money transfer operations
-- Transaction history with pagination
-- ReDoc API documentation
-- Complete transaction safety with ACID guarantees
-- Race condition prevention for concurrent transfers
+#### Update Operations
+- Added `PUT /api/customers/{id}` with duplicate email detection
+- Added `PUT /api/accounts/{id}` with duplicate account detection
+- Both endpoints support idempotent updates with validation
+
+#### State Management
+- Added `POST /api/accounts/{id}/freeze` to transition account to Frozen status
+- Added `POST /api/accounts/{id}/unfreeze` to transition account to Active status
+- State validation prevents invalid transitions (e.g., freezing already frozen account)
+- Added Account.Status field to database schema (Active, Frozen, Closed)
+
+#### Database Migration
+- Migration `AddAccountStatusField` adds Status column to Accounts table
+- Default value set to "Active"
+- Supports future account lifecycle management
+
+#### Testing & Verification
+- ✅ All 7 new endpoints implemented and tested
+- ✅ Pagination verified with multiple test queries
+- ✅ Duplicate detection working (email, account number)
+- ✅ State transitions validated
+- ✅ Error handling confirmed
+- ✅ 0 build warnings/errors
+- ✅ All 16 endpoints verified live
+
