@@ -31,27 +31,29 @@ public class UpdateCustomerCommandHandler
         if (string.IsNullOrWhiteSpace(command.Email))
             throw new ArgumentException("Email is required.");
 
+        var normalizedEmail = command.Email.Trim().ToLowerInvariant();
+
         // Validate email format
         var emailAttribute = new EmailAddressAttribute();
-        if (!emailAttribute.IsValid(command.Email))
+        if (!emailAttribute.IsValid(normalizedEmail))
             throw new ArgumentException("Invalid email format.");
 
         var customer = await _context.Customers.FindAsync(command.CustomerId);
         if (customer == null)
             throw new ResourceNotFoundException("Customer", command.CustomerId);
 
-        // Check for duplicate email if email has changed
-        if (customer.Email != command.Email)
+        // Check for duplicate email if email has changed (case-insensitive comparison)
+        if (!string.Equals(customer.Email, normalizedEmail, StringComparison.OrdinalIgnoreCase))
         {
             var existingCustomer = await _context.Customers
-                .FirstOrDefaultAsync(c => c.Email == command.Email);
+                .FirstOrDefaultAsync(c => c.Email.ToLower() == normalizedEmail);
             if (existingCustomer != null)
-                throw new DuplicateEmailException(command.Email);
+                throw new DuplicateEmailException(normalizedEmail);
         }
 
         customer.FirstName = command.FirstName;
         customer.LastName = command.LastName;
-        customer.Email = command.Email;
+        customer.Email = normalizedEmail;
 
         try
         {
@@ -60,7 +62,7 @@ public class UpdateCustomerCommandHandler
         }
         catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("UNIQUE constraint failed", StringComparison.OrdinalIgnoreCase) ?? false)
         {
-            throw new DuplicateEmailException(command.Email);
+            throw new DuplicateEmailException(normalizedEmail);
         }
 
         return customer;
