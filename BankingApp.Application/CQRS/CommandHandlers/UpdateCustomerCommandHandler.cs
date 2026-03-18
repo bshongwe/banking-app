@@ -17,6 +17,8 @@ public class UpdateCustomerCommandHandler
 
     public async Task<Customer> HandleAsync(Commands.UpdateCustomerCommand command)
     {
+        ArgumentNullException.ThrowIfNull(command);
+
         if (command.CustomerId == Guid.Empty)
             throw new ArgumentException("Customer ID is required.");
 
