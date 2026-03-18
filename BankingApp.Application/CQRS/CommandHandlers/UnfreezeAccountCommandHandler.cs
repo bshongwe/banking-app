@@ -28,6 +28,9 @@ public class UnfreezeAccountCommandHandler
         if (account.Status == "Closed")
             throw new InvalidOperationException("Cannot unfreeze a closed account.");
 
+        if (account.Status != "Frozen")
+            throw new InvalidOperationException($"Cannot unfreeze account with status '{account.Status}'.");
+
         account.Status = "Active";
 
         await _context.SaveChangesAsync();
