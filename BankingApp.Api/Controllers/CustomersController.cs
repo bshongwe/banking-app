@@ -14,15 +14,18 @@ public class CustomersController : ControllerBase
     private readonly CreateCustomerCommandHandler _createCustomerHandler;
     private readonly GetCustomerQueryHandler _getCustomerHandler;
     private readonly ListCustomersQueryHandler _listCustomersHandler;
+    private readonly UpdateCustomerCommandHandler _updateCustomerHandler;
 
     public CustomersController(
         CreateCustomerCommandHandler createCustomerHandler,
         GetCustomerQueryHandler getCustomerHandler,
-        ListCustomersQueryHandler listCustomersHandler)
+        ListCustomersQueryHandler listCustomersHandler,
+        UpdateCustomerCommandHandler updateCustomerHandler)
     {
         _createCustomerHandler = createCustomerHandler;
         _getCustomerHandler = getCustomerHandler;
         _listCustomersHandler = listCustomersHandler;
+        _updateCustomerHandler = updateCustomerHandler;
     }
 
     /// <summary>
@@ -73,5 +76,21 @@ public class CustomersController : ControllerBase
     {
         var customer = await _createCustomerHandler.HandleAsync(command);
         return CreatedAtAction(nameof(GetCustomerById), new { id = customer.Id }, customer);
+    }
+
+    /// <summary>
+    /// Update an existing customer
+    /// </summary>
+    [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> UpdateCustomer(Guid id, [FromBody] UpdateCustomerCommand command)
+    {
+        command.CustomerId = id;
+        var customer = await _updateCustomerHandler.HandleAsync(command);
+        return Ok(customer);
     }
 }

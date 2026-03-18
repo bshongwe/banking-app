@@ -68,6 +68,10 @@ builder.Services.AddScoped<ITransferService, TransferService>();
 builder.Services.AddScoped<TransferMoneyCommandHandler>();
 builder.Services.AddScoped<CreateAccountCommandHandler>();
 builder.Services.AddScoped<CreateCustomerCommandHandler>();
+builder.Services.AddScoped<UpdateAccountCommandHandler>();
+builder.Services.AddScoped<UpdateCustomerCommandHandler>();
+builder.Services.AddScoped<FreezeAccountCommandHandler>();
+builder.Services.AddScoped<UnfreezeAccountCommandHandler>();
 
 // Register CQRS Query Handlers
 builder.Services.AddScoped<GetAccountBalanceQueryHandler>();

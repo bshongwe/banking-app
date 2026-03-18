@@ -24,6 +24,18 @@ Content-Type: application/json
 
 ###
 
+### Update Customer
+PUT {{BankingApp.Api_HostAddress}}/api/customers/{id}
+Content-Type: application/json
+
+{
+  "firstName": "Jane",
+  "lastName": "Smith",
+  "email": "jane.smith@example.com"
+}
+
+###
+
 ### List Accounts with Pagination (all accounts)
 GET {{BankingApp.Api_HostAddress}}/api/accounts?pageNumber=1&pageSize=10
 Accept: application/json
@@ -64,6 +76,26 @@ Content-Type: application/json
   "initialBalance": 1000.00,
   "currency": "USD"
 }
+
+###
+
+### Update Account
+PUT {{BankingApp.Api_HostAddress}}/api/accounts/{id}
+Content-Type: application/json
+
+{
+  "accountNumber": "ACC001-UPDATED"
+}
+
+###
+
+### Freeze Account
+POST {{BankingApp.Api_HostAddress}}/api/accounts/{id}/freeze
+
+###
+
+### Unfreeze Account
+POST {{BankingApp.Api_HostAddress}}/api/accounts/{id}/unfreeze
 
 ###
 
