@@ -60,7 +60,7 @@ public class GatewaysController(
         {
             Gateways = statuses,
             TotalAvailable = statuses.Count(g => g.IsConfigured),
-            TotalConfigured = statuses.Count(g => g.IsConfigured),
+            TotalConfigured = statuses.Count,
             CheckedAt = checkedAt
         });
     }
@@ -91,12 +91,25 @@ public class GatewaysController(
                 HttpContext.TraceIdentifier));
         }
 
-        var isConfigured = await gateway.ValidateConfigurationAsync();
+        bool isConfigured;
+        string status;
+        try
+        {
+            isConfigured = await gateway.ValidateConfigurationAsync();
+            status = isConfigured ? "Available" : "Unavailable";
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to validate gateway {ProviderId}", providerId);
+            isConfigured = false;
+            status = "Error";
+        }
+
         return Ok(new GatewayStatusDto
         {
             ProviderId = gateway.ProviderId,
             IsConfigured = isConfigured,
-            Status = isConfigured ? "Available" : "Unavailable",
+            Status = status,
             CheckedAt = DateTime.UtcNow
         });
     }
