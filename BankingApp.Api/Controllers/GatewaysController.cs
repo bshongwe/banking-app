@@ -32,14 +32,28 @@ public class GatewaysController(
         var statuses = new List<GatewayStatusDto>();
         foreach (var gateway in gateways)
         {
-            var isConfigured = await gateway.ValidateConfigurationAsync();
-            statuses.Add(new GatewayStatusDto
+            try
             {
-                ProviderId = gateway.ProviderId,
-                IsConfigured = isConfigured,
-                Status = isConfigured ? "Available" : "Unavailable",
-                CheckedAt = checkedAt
-            });
+                var isConfigured = await gateway.ValidateConfigurationAsync();
+                statuses.Add(new GatewayStatusDto
+                {
+                    ProviderId = gateway.ProviderId,
+                    IsConfigured = isConfigured,
+                    Status = isConfigured ? "Available" : "Unavailable",
+                    CheckedAt = checkedAt
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to validate gateway {ProviderId}", gateway.ProviderId);
+                statuses.Add(new GatewayStatusDto
+                {
+                    ProviderId = gateway.ProviderId,
+                    IsConfigured = false,
+                    Status = "Error",
+                    CheckedAt = checkedAt
+                });
+            }
         }
 
         return Ok(new GatewayListDto
