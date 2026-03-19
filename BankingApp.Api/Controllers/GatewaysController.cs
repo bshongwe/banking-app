@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using BankingApp.Application.Services.PaymentGateways;
+using BankingApp.Domain.PaymentGateways;
 using BankingApp.Application.DTOs;
 
 namespace BankingApp.Api.Controllers;

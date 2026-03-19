@@ -1,4 +1,5 @@
 using BankingApp.Application.Services.PaymentGateways;
+using BankingApp.Domain.PaymentGateways;
 
 namespace BankingApp.Api.Services;
 
