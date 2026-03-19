@@ -202,6 +202,16 @@ public class EnhancedTransferMoneyCommandHandler
             if (toAccount == null)
                 throw new ResourceNotFoundException("Account", command.ToAccountId);
 
+            // Check sufficient balance before calling external gateway
+            var fromAccountBalance = await _accountRepository.GetBalanceAsync(command.FromAccountId);
+            if (fromAccountBalance < command.Amount)
+            {
+                _logger.LogWarning(
+                    "Insufficient funds for external transfer. Balance: {Balance}, Required: {Required}",
+                    fromAccountBalance, command.Amount);
+                throw new InsufficientFundsException(fromAccountBalance, command.Amount);
+            }
+
             // Get appropriate gateway
             var gateway = _paymentGatewayFactory.GetGateway(gatewayId);
 
@@ -213,7 +223,7 @@ public class EnhancedTransferMoneyCommandHandler
             }
 
             // Map command to payment request
-            var paymentRequest = MapCommandToPaymentRequest(command);
+            var paymentRequest = MapCommandToPaymentRequest(command, fromAccount.Currency);
 
             // Process payment via external gateway
             _logger.LogInformation("Sending payment request to {Gateway}", gatewayId);
@@ -264,9 +274,19 @@ public class EnhancedTransferMoneyCommandHandler
                 CreatedAt = DateTime.UtcNow
             };
 
-            await _transactionRepository.AddAsync(transaction);
-            await _ledgerRepository.AddRangeAsync(new[] { debitEntry, creditEntry });
-            await _transactionRepository.SaveChangesAsync();
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                await _transactionRepository.AddAsync(transaction);
+                await _ledgerRepository.AddRangeAsync(new[] { debitEntry, creditEntry });
+                await _transactionRepository.SaveChangesAsync();
+                await _unitOfWork.CommitTransactionAsync();
+            }
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
 
             _logger.LogInformation(
                 "External transfer completed successfully. Gateway: {Gateway}, ExternalTransactionId: {ExternalId}",
@@ -299,13 +319,13 @@ public class EnhancedTransferMoneyCommandHandler
     /// <summary>
     /// Maps TransferMoneyCommand to PaymentRequest for gateway processing
     /// </summary>
-    private PaymentRequest MapCommandToPaymentRequest(Commands.TransferMoneyCommand command)
+    private PaymentRequest MapCommandToPaymentRequest(Commands.TransferMoneyCommand command, string currency)
     {
         return new PaymentRequest
         {
             Reference = command.Reference,
             Amount = command.Amount,
-            Currency = "ZAR",
+            Currency = currency,
             SourceAccountType = command.SourceAccountType ?? "checking",
             SourceBankCode = command.GatewayMetadata.GetValueOrDefault("sourceBankCode", ""),
             DestinationAccountNumber = command.GatewayMetadata.GetValueOrDefault("accountNumber", ""),
