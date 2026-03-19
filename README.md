@@ -15,7 +15,7 @@ This is a full-stack banking application that demonstrates clean architecture pr
 - ✅ **Balance Queries** - Real-time account balance calculations
 - ✅ **Double-Entry Bookkeeping** - Complete audit trail via ledger entries
 - ✅ **Transaction Safety** - Database transactions ensure data consistency
-- ✅ **Interactive API Documentation** - ReDoc interface for testing endpoints
+- ✅ **Interactive API Documentation** - Swagger UI interface for testing endpoints
 - ✅ **Banking-Grade Error Handling** - 18 domain-specific error codes with HTTP status codes
 - ✅ **Production-Ready** - Clean architecture, comprehensive documentation, zero build warnings
 
@@ -813,7 +813,7 @@ banking-app/
 │   ├── Program.cs                           # Startup configuration
 │   ├── appsettings.json                     # Configuration
 │   └── wwwroot/
-│       └── swagger-ui.html                  # Interactive API console (ReDoc + request builder)
+│       └── swagger-ui.html                  # Interactive API console with request builder (Swagger UI)
 │
 ├── BankingApp.Application/                  # Business logic
 │   ├── CQRS/
