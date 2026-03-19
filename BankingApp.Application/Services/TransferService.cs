@@ -1,24 +1,13 @@
 using BankingApp.Domain.Entities;
-using BankingApp.Infrastructure.Data;
 using BankingApp.Infrastructure.Repositories;
 
 namespace BankingApp.Application.Services;
 
-public class TransferService : ITransferService
+public class TransferService(
+    ITransactionRepository transactionRepository,
+    IAccountRepository accountRepository,
+    ILedgerRepository ledgerRepository) : ITransferService
 {
-    private readonly BankingDbContext _context;
-    private readonly IAccountRepository _accountRepository;
-    private readonly ILedgerRepository _ledgerRepository;
-
-    public TransferService(
-        BankingDbContext context,
-        IAccountRepository accountRepository,
-        ILedgerRepository ledgerRepository)
-    {
-        _context = context;
-        _accountRepository = accountRepository;
-        _ledgerRepository = ledgerRepository;
-    }
 
     public async Task<Transaction> TransferAsync(Guid fromAccountId, Guid toAccountId, decimal amount, string reference)
     {
@@ -28,19 +17,18 @@ public class TransferService : ITransferService
         if (fromAccountId == toAccountId)
             throw new ArgumentException("Cannot transfer to the same account.", nameof(toAccountId));
 
-        var fromAccount = await _accountRepository.GetByIdAsync(fromAccountId);
+        var fromAccount = await accountRepository.GetByIdAsync(fromAccountId);
         if (fromAccount == null)
-            throw new InvalidOperationException($"Source account {fromAccountId} not found.");
+            throw new InvalidOperationException("Source account not found.");
 
-        var toAccount = await _accountRepository.GetByIdAsync(toAccountId);
+        var toAccount = await accountRepository.GetByIdAsync(toAccountId);
         if (toAccount == null)
-            throw new InvalidOperationException($"Destination account {toAccountId} not found.");
+            throw new InvalidOperationException("Destination account not found.");
 
         // Check if source account has sufficient balance
-        var fromAccountBalance = await _accountRepository.GetBalanceAsync(fromAccountId);
+        var fromAccountBalance = await accountRepository.GetBalanceAsync(fromAccountId);
         if (fromAccountBalance < amount)
-            throw new InvalidOperationException(
-                $"Insufficient funds. Current balance: {fromAccountBalance}, requested transfer: {amount}");
+            throw new InvalidOperationException("Insufficient funds.");
 
         // Create a transaction and two corresponding ledger entries
         var transaction = new Transaction
@@ -71,9 +59,9 @@ public class TransferService : ITransferService
         };
 
         // Add entries and save as a single transaction
-        await _context.Transactions.AddAsync(transaction);
-        await _ledgerRepository.AddRangeAsync(new[] { debitEntry, creditEntry });
-        await _ledgerRepository.SaveChangesAsync();
+        await transactionRepository.AddAsync(transaction);
+        await ledgerRepository.AddRangeAsync(new[] { debitEntry, creditEntry });
+        await ledgerRepository.SaveChangesAsync();
 
         return transaction;
     }

@@ -4,35 +4,29 @@ using BankingApp.Infrastructure.Data;
 
 namespace BankingApp.Infrastructure.Repositories;
 
-public class AccountRepository : IAccountRepository
+public class AccountRepository(BankingDbContext context) : IAccountRepository
 {
-    private readonly BankingDbContext _context;
-
-    public AccountRepository(BankingDbContext context)
-    {
-        _context = context;
-    }
 
     public async Task<Account?> GetByIdAsync(Guid id)
     {
-        return await _context.Accounts.FindAsync(id);
+        return await context.Accounts.FindAsync(id);
     }
 
     public async Task<Account?> GetByAccountNumberAsync(string accountNumber)
     {
-        return await _context.Accounts.FirstOrDefaultAsync(a => a.AccountNumber == accountNumber);
+        return await context.Accounts.FirstOrDefaultAsync(a => a.AccountNumber == accountNumber);
     }
 
     public async Task<IEnumerable<Account>> GetByCustomerIdAsync(Guid customerId)
     {
-        return await _context.Accounts
+        return await context.Accounts
             .Where(a => a.CustomerId == customerId)
             .ToListAsync();
     }
 
     public async Task<decimal> GetBalanceAsync(Guid accountId)
     {
-        var balance = await _context.LedgerEntries
+        var balance = await context.LedgerEntries
             .Where(le => le.AccountId == accountId)
             .GroupBy(le => le.AccountId)
             .Select(g => new
@@ -51,16 +45,16 @@ public class AccountRepository : IAccountRepository
 
     public async Task AddAsync(Account account)
     {
-        await _context.Accounts.AddAsync(account);
+        await context.Accounts.AddAsync(account);
     }
 
     public async Task UpdateAsync(Account account)
     {
-        _context.Accounts.Update(account);
+        context.Accounts.Update(account);
     }
 
     public async Task SaveChangesAsync()
     {
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 }

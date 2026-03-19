@@ -20,6 +20,7 @@ public class CustomerCreateController : ControllerBase
     /// Create a new customer
     /// </summary>
     [HttpPost]
+    [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]

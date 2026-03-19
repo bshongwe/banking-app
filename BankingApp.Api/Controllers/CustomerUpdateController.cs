@@ -20,6 +20,7 @@ public class CustomerUpdateController : ControllerBase
     /// Update an existing customer
     /// </summary>
     [HttpPut]
+    [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]

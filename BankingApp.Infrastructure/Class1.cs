@@ -1,2 +1,3 @@
-﻿// Infrastructure layer contains database context and data access implementations
+// Infrastructure layer: EF Core DbContext, migrations, repository implementations, and payment gateway adapters.
+// See Data/, Migrations/, Repositories/, and PaymentGateways/ subdirectories.
 

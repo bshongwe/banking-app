@@ -25,6 +25,7 @@ public class AccountsController : ControllerBase
     /// Create a new bank account
     /// </summary>
     [HttpPost]
+    [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
@@ -126,6 +127,7 @@ public class AccountsController : ControllerBase
     /// Update an existing account
     /// </summary>
     [HttpPut("{id}")]
+    [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]

@@ -1,12 +1,15 @@
 using BankingApp.Infrastructure.Data;
 using BankingApp.Infrastructure.Repositories;
+using BankingApp.Infrastructure.PaymentGateways;
 using BankingApp.Application.Services;
+using BankingApp.Application.Services.PaymentGateways;
 using BankingApp.Application.CQRS.CommandHandlers;
 using BankingApp.Application.CQRS.QueryHandlers;
 using BankingApp.Application.Validators;
 using BankingApp.Application.UnitOfWork;
 using BankingApp.Api.Middleware;
 using BankingApp.Api.Handlers;
+using BankingApp.Api.Services;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -65,8 +68,27 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // Register services
 builder.Services.AddScoped<ITransferService, TransferService>();
 
+// Bind payment gateway options from configuration
+builder.Services.Configure<StripeConfig>(builder.Configuration.GetSection("Stripe"));
+builder.Services.Configure<PayPalConfig>(builder.Configuration.GetSection("PayPal"));
+builder.Services.Configure<SouthAfricanBankConfig>(builder.Configuration.GetSection("SouthAfricanBank"));
+
+// Register payment gateways
+builder.Services.AddHttpClient<PayPalPaymentGateway>();
+builder.Services.AddScoped<StripePaymentGateway>();
+builder.Services.AddScoped<SouthAfricanBankPaymentGateway>();
+builder.Services.AddScoped<IPaymentGatewayFactory, PaymentGatewayFactory>();
+
+// Register gateway diagnostics background service
+builder.Services.AddSingleton(new GatewayDiagnosticsOptions
+{
+    IntervalSeconds = builder.Configuration.GetValue("GatewayDiagnostics:IntervalSeconds", 300)
+});
+builder.Services.AddHostedService<GatewayDiagnosticsService>();
+
 // Register CQRS Command Handlers
 builder.Services.AddScoped<TransferMoneyCommandHandler>();
+builder.Services.AddScoped<EnhancedTransferMoneyCommandHandler>();
 builder.Services.AddScoped<CreateAccountCommandHandler>();
 builder.Services.AddScoped<CreateCustomerCommandHandler>();
 builder.Services.AddScoped<UpdateAccountCommandHandler>();

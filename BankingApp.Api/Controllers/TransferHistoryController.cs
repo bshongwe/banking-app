@@ -7,14 +7,8 @@ namespace BankingApp.Api.Controllers;
 
 [ApiController]
 [Route("api/transfer-history")]
-public class TransferHistoryController : ControllerBase
+public class TransferHistoryController(ListTransfersQueryHandler listTransfersHandler) : ControllerBase
 {
-    private readonly ListTransfersQueryHandler _listTransfersHandler;
-
-    public TransferHistoryController(ListTransfersQueryHandler listTransfersHandler)
-    {
-        _listTransfersHandler = listTransfersHandler;
-    }
 
     /// <summary>
     /// List all transfers with optional account filtering and pagination
@@ -44,7 +38,7 @@ public class TransferHistoryController : ControllerBase
             PageNumber = pageNumber, 
             PageSize = pageSize 
         };
-        var result = await _listTransfersHandler.HandleAsync(query);
+        var result = await listTransfersHandler.HandleAsync(query);
         return Ok(result);
     }
 }

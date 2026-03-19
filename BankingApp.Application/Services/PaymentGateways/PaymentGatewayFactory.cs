@@ -1,0 +1,131 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using BankingApp.Infrastructure.PaymentGateways;
+
+namespace BankingApp.Application.Services.PaymentGateways;
+
+/// <summary>
+/// Factory for managing multiple payment gateway providers
+/// Enables dynamic selection of payment processor based on requirements
+/// </summary>
+public interface IPaymentGatewayFactory
+{
+    /// <summary>
+    /// Get a specific payment gateway by provider ID
+    /// </summary>
+    IPaymentGateway GetGateway(string providerId);
+
+    /// <summary>
+    /// Get all available payment gateways
+    /// </summary>
+    IEnumerable<IPaymentGateway> GetAllGateways();
+
+    /// <summary>
+    /// Automatically select the best gateway based on transfer details
+    /// </summary>
+    Task<IPaymentGateway> SelectOptimalGatewayAsync(PaymentRequest request);
+}
+
+/// <summary>
+/// Default implementation of payment gateway factory
+/// </summary>
+public class PaymentGatewayFactory(
+    IServiceProvider serviceProvider,
+    ILogger<PaymentGatewayFactory> logger) : IPaymentGatewayFactory
+{
+
+    public IPaymentGateway GetGateway(string providerId)
+    {
+        try
+        {
+            IPaymentGateway gateway = providerId.ToLower() switch
+            {
+                "stripe" => serviceProvider.GetRequiredService<StripePaymentGateway>(),
+                "paypal" => serviceProvider.GetRequiredService<PayPalPaymentGateway>(),
+                "sa_banks" => serviceProvider.GetRequiredService<SouthAfricanBankPaymentGateway>(),
+                _ => throw new KeyNotFoundException($"Payment gateway '{providerId}' not found")
+            };
+
+            logger.LogInformation("Retrieved payment gateway: {ProviderId}", providerId);
+            return gateway;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to retrieve payment gateway: {ProviderId}", providerId);
+            throw new InvalidOperationException($"Payment gateway '{providerId}' is unavailable.", ex);
+        }
+    }
+
+    public IEnumerable<IPaymentGateway> GetAllGateways()
+    {
+        try
+        {
+            var gateways = new List<IPaymentGateway>
+            {
+                serviceProvider.GetRequiredService<StripePaymentGateway>(),
+                serviceProvider.GetRequiredService<PayPalPaymentGateway>(),
+                serviceProvider.GetRequiredService<SouthAfricanBankPaymentGateway>()
+            };
+
+            logger.LogInformation("Retrieved {Count} payment gateways", gateways.Count);
+            return gateways;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to retrieve all payment gateways");
+            throw new InvalidOperationException("One or more payment gateways could not be retrieved.", ex);
+        }
+    }
+
+    public async Task<IPaymentGateway> SelectOptimalGatewayAsync(PaymentRequest request)
+    {
+        logger.LogInformation("Selecting optimal payment gateway for {Amount} {Currency}", 
+            request.Amount, request.Currency);
+
+        var gateways = GetAllGateways().ToList();
+
+        foreach (var gateway in gateways)
+        {
+            if (await gateway.ValidateConfigurationAsync() && SupportsRequest(gateway, request))
+            {
+                logger.LogInformation("Selected gateway: {ProviderId}", gateway.ProviderId);
+                return gateway;
+            }
+        }
+
+        throw new InvalidOperationException("No suitable payment gateway found for the requested transfer");
+    }
+
+    /// <summary>
+    /// Determines if a gateway supports the given payment request
+    /// </summary>
+    private bool SupportsRequest(IPaymentGateway gateway, PaymentRequest request)
+    {
+        return gateway.ProviderId switch
+        {
+            "stripe" => IsSupportedByStripe(request),
+            "paypal" => IsSupportedByPayPal(request),
+            "sa_banks" => IsSupportedBySouthAfricanBanks(request),
+            _ => false
+        };
+    }
+
+    private bool IsSupportedByStripe(PaymentRequest request)
+    {
+        var config = serviceProvider.GetRequiredService<IOptions<StripeConfig>>();
+        return config.Value.SupportedCurrencies?.Contains(request.Currency.ToUpper()) ?? false;
+    }
+
+    private bool IsSupportedByPayPal(PaymentRequest request)
+    {
+        var config = serviceProvider.GetRequiredService<IOptions<PayPalConfig>>();
+        return config.Value.SupportedCurrencies?.Contains(request.Currency.ToUpper()) ?? false;
+    }
+
+    private bool IsSupportedBySouthAfricanBanks(PaymentRequest request)
+    {
+        var config = serviceProvider.GetRequiredService<IOptions<SouthAfricanBankConfig>>();
+        return config.Value.SupportedCurrencies?.Contains(request.Currency.ToUpper()) ?? false;
+    }
+}
