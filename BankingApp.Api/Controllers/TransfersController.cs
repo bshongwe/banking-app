@@ -24,6 +24,7 @@ public class TransfersController : ControllerBase
     /// Each transfer creates two ledger entries: a debit on the source account and a credit on the destination account.
     /// </remarks>
     [HttpPost]
+    [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]

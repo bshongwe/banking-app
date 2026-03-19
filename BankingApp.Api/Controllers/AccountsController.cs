@@ -25,6 +25,7 @@ public class AccountsController : ControllerBase
     /// Create a new bank account
     /// </summary>
     [HttpPost]
+    [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
@@ -126,6 +127,7 @@ public class AccountsController : ControllerBase
     /// Update an existing account
     /// </summary>
     [HttpPut("{id}")]
+    [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
@@ -142,6 +144,7 @@ public class AccountsController : ControllerBase
     /// Freeze an account (prevent transactions)
     /// </summary>
     [HttpPost("{id}/freeze")]
+    [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
@@ -158,6 +161,7 @@ public class AccountsController : ControllerBase
     /// Unfreeze an account (allow transactions)
     /// </summary>
     [HttpPost("{id}/unfreeze")]
+    [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
