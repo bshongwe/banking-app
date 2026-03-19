@@ -340,7 +340,7 @@ dotnet run
 The API will start on `http://localhost:5242`
 
 2. **Access the API Documentation**
-- Interactive ReDoc documentation: `http://localhost:5242/api-docs.html`
+- Interactive API console: `http://localhost:5242/swagger-ui.html`
 - Raw OpenAPI spec: `http://localhost:5242/openapi/v1.json`
 
 3. **Database**
@@ -813,7 +813,7 @@ banking-app/
 │   ├── Program.cs                           # Startup configuration
 │   ├── appsettings.json                     # Configuration
 │   └── wwwroot/
-│       └── api-docs.html                    # ReDoc documentation
+│       └── swagger-ui.html                  # Interactive API console (ReDoc + request builder)
 │
 ├── BankingApp.Application/                  # Business logic
 │   ├── CQRS/
