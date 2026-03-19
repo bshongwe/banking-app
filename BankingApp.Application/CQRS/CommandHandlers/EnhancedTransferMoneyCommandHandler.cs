@@ -321,17 +321,18 @@ public class EnhancedTransferMoneyCommandHandler
     /// </summary>
     private PaymentRequest MapCommandToPaymentRequest(Commands.TransferMoneyCommand command, string currency)
     {
+        var metadata = command.GatewayMetadata ?? new Dictionary<string, string>();
         return new PaymentRequest
         {
             Reference = command.Reference,
             Amount = command.Amount,
             Currency = currency,
             SourceAccountType = command.SourceAccountType ?? "checking",
-            SourceBankCode = command.GatewayMetadata.GetValueOrDefault("sourceBankCode", ""),
-            DestinationAccountNumber = command.GatewayMetadata.GetValueOrDefault("accountNumber", ""),
+            SourceBankCode = metadata.GetValueOrDefault("sourceBankCode", ""),
+            DestinationAccountNumber = metadata.GetValueOrDefault("accountNumber", ""),
             DestinationBankCode = command.DestinationBankCode ?? "",
-            DestinationAccountHolder = command.GatewayMetadata.GetValueOrDefault("accountHolder", ""),
-            Metadata = command.GatewayMetadata
+            DestinationAccountHolder = metadata.GetValueOrDefault("accountHolder", ""),
+            Metadata = metadata
         };
     }
 
