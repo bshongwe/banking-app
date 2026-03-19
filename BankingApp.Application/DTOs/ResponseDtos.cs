@@ -99,3 +99,32 @@ public class CustomerDetailDto
     public DateTime CreatedAt { get; set; }
     public List<CustomerAccountItemDto> Accounts { get; set; } = new();
 }
+
+/// <summary>
+/// Payment gateway status DTO for health check and selection UI
+/// </summary>
+public class GatewayStatusDto
+{
+    /// <summary>Gateway provider identifier (e.g. stripe, paypal, sa_banks)</summary>
+    public string ProviderId { get; set; } = string.Empty;
+
+    /// <summary>Whether the gateway configuration is valid and reachable</summary>
+    public bool IsConfigured { get; set; }
+
+    /// <summary>Human-readable status label</summary>
+    public string Status { get; set; } = string.Empty;
+
+    /// <summary>UTC timestamp of when this status was checked</summary>
+    public DateTime CheckedAt { get; set; }
+}
+
+/// <summary>
+/// Response wrapper for the gateway list endpoint
+/// </summary>
+public class GatewayListDto
+{
+    public List<GatewayStatusDto> Gateways { get; set; } = new();
+    public int TotalConfigured { get; set; }
+    public int TotalAvailable { get; set; }
+    public DateTime CheckedAt { get; set; }
+}
