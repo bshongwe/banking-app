@@ -53,7 +53,7 @@ public class PaymentGatewayFactory(
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to retrieve payment gateway: {ProviderId}", providerId);
-            throw;
+            throw new InvalidOperationException($"Payment gateway '{providerId}' is unavailable.", ex);
         }
     }
 
@@ -74,7 +74,7 @@ public class PaymentGatewayFactory(
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to retrieve all payment gateways");
-            throw;
+            throw new InvalidOperationException("One or more payment gateways could not be retrieved.", ex);
         }
     }
 
@@ -87,13 +87,10 @@ public class PaymentGatewayFactory(
 
         foreach (var gateway in gateways)
         {
-            if (await gateway.ValidateConfigurationAsync())
+            if (await gateway.ValidateConfigurationAsync() && SupportsRequest(gateway, request))
             {
-                if (SupportsRequest(gateway, request))
-                {
-                    logger.LogInformation("Selected gateway: {ProviderId}", gateway.ProviderId);
-                    return gateway;
-                }
+                logger.LogInformation("Selected gateway: {ProviderId}", gateway.ProviderId);
+                return gateway;
             }
         }
 
