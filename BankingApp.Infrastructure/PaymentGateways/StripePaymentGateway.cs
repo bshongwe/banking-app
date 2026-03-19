@@ -66,43 +66,38 @@ public class StripePaymentGateway : IPaymentGateway
                 };
             }
 
-            // TODO: Replace with actual Stripe SDK implementation
-            // Phase 1: Install Stripe.net NuGet package
-            //   dotnet add BankingApp.Infrastructure package Stripe.net
-            // Phase 2: Configure Stripe API key
-            //   StripeConfiguration.ApiKey = _config.ApiKey;
-            // Phase 3: Create payment via ChargeService or PaymentIntentService
-            //   var service = new PaymentIntentService();
-            //   var options = new PaymentIntentCreateOptions
-            //   {
-            //       Amount = amountInCents,
-            //       Currency = request.Currency.ToLower(),
-            //       PaymentMethod = request.SourceAccountNumber,
-            //       ConfirmationMethod = "automatic",
-            //       Description = request.Reference,
-            //       Metadata = request.Metadata,
-            //       IdempotencyKey = request.Reference
-            //   };
-            //   var paymentIntent = await service.CreateAsync(options);
-            // Phase 4: Handle response
-            //   if (paymentIntent.Status == "succeeded") { /* success */ }
-            //   else if (paymentIntent.Status == "requires_action") { /* 3D Secure */ }
-            //   else { /* failed */ }
-            
-            // For now, simulate successful payment while SDK is being integrated
-            _logger.LogInformation("Stripe payment processing in simulation mode. Install Stripe.net package to use real Stripe API.");
-            return SimulatePayment(request);
+            // Stripe SDK integration steps (pending Stripe.net package installation):
+            //   Step 1: dotnet add BankingApp.Infrastructure package Stripe.net
+            //   Step 2: StripeConfiguration.ApiKey = _config.ApiKey;
+            //   Step 3: var service = new PaymentIntentService();
+            //           var options = new PaymentIntentCreateOptions
+            //           {
+            //               Amount = amountInCents,
+            //               Currency = request.Currency.ToLower(),
+            //               PaymentMethod = request.SourceAccountNumber,
+            //               ConfirmationMethod = "automatic",
+            //               Description = request.Reference,
+            //               Metadata = request.Metadata,
+            //               IdempotencyKey = request.Reference
+            //           };
+            //           var paymentIntent = await service.CreateAsync(options);
+            //   Step 4: Map response — "succeeded" => COMPLETED, "requires_action" => 3DS, else FAILED
+            throw new NotImplementedException(
+                "Stripe SDK integration is not yet complete. " +
+                "Install Stripe.net package and implement PaymentIntentService calls before enabling live payments.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Stripe payment processing failed for reference: {Reference}", request.Reference);
+            // Sanitize exception message before logging to prevent log injection (CWE-117)
+            var safeMessage = ex.Message.ReplaceLineEndings(" ");
+            _logger.LogError(ex, "Stripe payment processing failed for reference: {Reference}. Error: {ErrorMessage}", request.Reference, safeMessage);
             return new PaymentResult
             {
                 Success = false,
                 Status = "FAILED",
                 Amount = request.Amount,
                 ProcessedAt = DateTime.UtcNow,
-                ErrorMessage = ex.Message,
+                ErrorMessage = "Payment processing failed. Please try again.",
                 ErrorCode = "STRIPE_ERROR"
             };
         }
@@ -130,37 +125,27 @@ public class StripePaymentGateway : IPaymentGateway
         {
             _logger.LogInformation("Retrieving Stripe payment status. TransactionId: {TransactionId}", transactionId);
 
-            // TODO: Implement Stripe status check
-            // Phase 1: Use PaymentIntentService or ChargeService to retrieve status
-            //   var service = new PaymentIntentService();
-            //   var paymentIntent = await service.GetAsync(transactionId);
-            // Phase 2: Map Stripe status to our PaymentStatusResult
-            //   string status = paymentIntent.Status switch
-            //   {
-            //       "succeeded" => "COMPLETED",
-            //       "processing" => "PENDING",
-            //       "requires_action" => "PENDING",
-            //       "canceled" => "FAILED",
-            //       _ => "UNKNOWN"
-            //   };
-            // Phase 3: Return status with completion time
-            //   return new PaymentStatusResult { Status = status, CompletedAt = ... };
-
-            return new PaymentStatusResult
-            {
-                TransactionId = transactionId,
-                Status = "COMPLETED",
-                CompletedAt = DateTime.UtcNow
-            };
+            // Stripe status check steps (pending Stripe.net package installation):
+            //   Step 1: var service = new PaymentIntentService();
+            //           var paymentIntent = await service.GetAsync(transactionId);
+            //   Step 2: Map Stripe status to PaymentStatusResult —
+            //           "succeeded" => "COMPLETED", "processing" => "PENDING",
+            //           "requires_action" => "PENDING", "canceled" => "FAILED", _ => "UNKNOWN"
+            //   Step 3: return new PaymentStatusResult { Status = status, CompletedAt = ... };
+            throw new NotImplementedException(
+                "Stripe status check is not yet implemented. " +
+                "Install Stripe.net package and implement PaymentIntentService.GetAsync before querying live payment status.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to retrieve Stripe payment status for: {TransactionId}", transactionId);
+            // Sanitize exception message before logging to prevent log injection (CWE-117)
+            var safeMessage = ex.Message.ReplaceLineEndings(" ");
+            _logger.LogError(ex, "Failed to retrieve Stripe payment status for: {TransactionId}. Error: {ErrorMessage}", transactionId, safeMessage);
             return new PaymentStatusResult
             {
                 TransactionId = transactionId,
                 Status = "UNKNOWN",
-                ErrorMessage = ex.Message
+                ErrorMessage = "Status check failed. Please try again."
             };
         }
     }
@@ -175,21 +160,19 @@ public class StripePaymentGateway : IPaymentGateway
                 return false;
             }
 
-            // TODO: Validate Stripe configuration by making a test API call
-            // Phase 1: Use AccountService to retrieve account details
-            //   var service = new AccountService();
-            //   var account = await service.GetAsync();
-            // Phase 2: Verify account is active and has required permissions
-            //   if (account.ChargesEnabled && account.PayoutsEnabled) { return true; }
-            // Phase 3: Handle validation errors gracefully
-            //   catch (StripeException ex) => log and return false
-
-            _logger.LogInformation("Stripe configuration is valid");
+            // Stripe configuration validation steps (pending Stripe.net package installation):
+            //   Step 1: var service = new AccountService();
+            //           var account = await service.GetAsync();
+            //   Step 2: Verify account.ChargesEnabled && account.PayoutsEnabled
+            //   Step 3: catch (StripeException ex) => log sanitized message and return false
+            _logger.LogInformation("Stripe API key is present. Full validation requires Stripe.net SDK integration.");
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Stripe configuration validation failed");
+            // Sanitize exception message before logging to prevent log injection (CWE-117)
+            var safeMessage = ex.Message.ReplaceLineEndings(" ");
+            _logger.LogError(ex, "Stripe configuration validation failed. Error: {ErrorMessage}", safeMessage);
             return false;
         }
     }
