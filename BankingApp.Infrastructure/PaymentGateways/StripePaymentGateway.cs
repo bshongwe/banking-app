@@ -52,7 +52,7 @@ public class StripePaymentGateway : IPaymentGateway
             }
 
             // Validate currency is supported
-            if (!_config.SupportedCurrencies.Contains(request.Currency.ToUpper()))
+            if (_config.SupportedCurrencies?.Contains(request.Currency.ToUpper()) != true)
             {
                 _logger.LogWarning("Currency {Currency} not supported by Stripe gateway", request.Currency);
                 return new PaymentResult
