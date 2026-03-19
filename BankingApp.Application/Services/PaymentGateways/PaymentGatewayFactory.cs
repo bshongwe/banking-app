@@ -39,11 +39,11 @@ public class PaymentGatewayFactory(
     {
         try
         {
-            var gateway = providerId.ToLower() switch
+            IPaymentGateway gateway = providerId.ToLower() switch
             {
-                "stripe" => (IPaymentGateway)serviceProvider.GetRequiredService<StripePaymentGateway>(),
-                "paypal" => (IPaymentGateway)serviceProvider.GetRequiredService<PayPalPaymentGateway>(),
-                "sa_banks" => (IPaymentGateway)serviceProvider.GetRequiredService<SouthAfricanBankPaymentGateway>(),
+                "stripe" => serviceProvider.GetRequiredService<StripePaymentGateway>(),
+                "paypal" => serviceProvider.GetRequiredService<PayPalPaymentGateway>(),
+                "sa_banks" => serviceProvider.GetRequiredService<SouthAfricanBankPaymentGateway>(),
                 _ => throw new KeyNotFoundException($"Payment gateway '{providerId}' not found")
             };
 
