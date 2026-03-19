@@ -9,6 +9,7 @@ using BankingApp.Application.Validators;
 using BankingApp.Application.UnitOfWork;
 using BankingApp.Api.Middleware;
 using BankingApp.Api.Handlers;
+using BankingApp.Api.Services;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
