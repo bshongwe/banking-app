@@ -114,18 +114,18 @@ public class PaymentGatewayFactory(
     private bool IsSupportedByStripe(PaymentRequest request)
     {
         var config = serviceProvider.GetRequiredService<IOptions<StripeConfig>>();
-        return config.Value.SupportedCurrencies.Contains(request.Currency.ToUpper());
+        return config.Value.SupportedCurrencies?.Contains(request.Currency.ToUpper()) ?? false;
     }
 
     private bool IsSupportedByPayPal(PaymentRequest request)
     {
         var config = serviceProvider.GetRequiredService<IOptions<PayPalConfig>>();
-        return config.Value.SupportedCurrencies.Contains(request.Currency.ToUpper());
+        return config.Value.SupportedCurrencies?.Contains(request.Currency.ToUpper()) ?? false;
     }
 
     private bool IsSupportedBySouthAfricanBanks(PaymentRequest request)
     {
         var config = serviceProvider.GetRequiredService<IOptions<SouthAfricanBankConfig>>();
-        return config.Value.SupportedCurrencies.Contains(request.Currency.ToUpper());
+        return config.Value.SupportedCurrencies?.Contains(request.Currency.ToUpper()) ?? false;
     }
 }
