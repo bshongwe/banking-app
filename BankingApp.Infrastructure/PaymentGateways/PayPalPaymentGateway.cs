@@ -115,7 +115,7 @@ public class PayPalPaymentGateway : IPaymentGateway
             {
                 TransactionId = transactionId,
                 Status = "UNKNOWN",
-                ErrorMessage = ex.Message
+                ErrorMessage = "Status check failed. Please try again."
             };
         }
     }
@@ -131,7 +131,12 @@ public class PayPalPaymentGateway : IPaymentGateway
             }
 
             _logger.LogInformation("PayPal configuration is valid");
-            return true;
+            // PayPal SDK integration is pending (PayPalCheckoutSdk package not yet installed).
+            // Until ProcessPaymentAsync is fully implemented, report as unavailable
+            // even when credentials are present to prevent false-positive health checks.
+            // Remove this block once PayPalCheckoutSdk is integrated.
+            _logger.LogWarning("PayPal credentials are present but SDK integration is not yet complete. Reporting as unavailable.");
+            return false;
         }
         catch (Exception ex)
         {
