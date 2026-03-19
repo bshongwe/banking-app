@@ -67,12 +67,13 @@ public class SouthAfricanBankPaymentGateway : IPaymentGateway
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "SA Bank transfer failed for reference: {Reference}", request.Reference);
+            var safeMessage = ex.Message.ReplaceLineEndings(" ");
+            _logger.LogError(ex, "SA Bank transfer failed for reference: {Reference}. Error: {ErrorMessage}", request.Reference, safeMessage);
             return new PaymentResult
             {
                 Success = false,
                 Status = "FAILED",
-                ErrorMessage = ex.Message,
+                ErrorMessage = "Transfer processing failed. Please try again.",
                 ErrorCode = "SA_BANK_ERROR"
             };
         }
@@ -98,12 +99,13 @@ public class SouthAfricanBankPaymentGateway : IPaymentGateway
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to retrieve SA Bank transfer status for: {TransactionId}", transactionId);
+            var safeMessage = ex.Message.ReplaceLineEndings(" ");
+            _logger.LogError(ex, "Failed to retrieve SA Bank transfer status for: {TransactionId}. Error: {ErrorMessage}", transactionId, safeMessage);
             return new PaymentStatusResult
             {
                 TransactionId = transactionId,
                 Status = "UNKNOWN",
-                ErrorMessage = ex.Message
+                ErrorMessage = "Status check failed. Please try again."
             };
         }
     }
@@ -158,8 +160,8 @@ public class SouthAfricanBankPaymentGateway : IPaymentGateway
     /// </summary>
     private string DetermineTransferMethod(decimal amount)
     {
-        // RTGS for amounts > R250,000 or marked as urgent
-        return amount > 250000 ? "RTGS" : "EFT";
+        // RTGS for amounts > configured MaxEFTAmount or marked as urgent
+        return amount > _config.MaxEFTAmount ? "RTGS" : "EFT";
     }
 
     /// <summary>
@@ -169,8 +171,8 @@ public class SouthAfricanBankPaymentGateway : IPaymentGateway
     private string GenerateSouthAfricanReference(string reference)
     {
         var date = DateTime.UtcNow.ToString("yyyyMMdd");
-        var random = new Random().Next(100000, 999999);
-        return $"SA-{date}-{random}";
+        var suffix = Guid.NewGuid().ToString("N")[..8].ToUpper();
+        return $"SA-{date}-{suffix}";
     }
 }
 
