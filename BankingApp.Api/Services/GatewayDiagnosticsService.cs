@@ -21,7 +21,14 @@ public class GatewayDiagnosticsService(
         while (!stoppingToken.IsCancellationRequested)
         {
             await ValidateAllGatewaysAsync();
-            await Task.Delay(TimeSpan.FromSeconds(options.IntervalSeconds), stoppingToken);
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(options.IntervalSeconds), stoppingToken);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
         }
     }
 
@@ -81,7 +88,12 @@ public class GatewayDiagnosticsService(
 public class GatewayDiagnosticsOptions
 {
     /// <summary>
-    /// How often to validate all gateways, in seconds. Default: 300 (5 minutes).
+    /// How often to validate all gateways, in seconds. Minimum: 30. Default: 300 (5 minutes).
     /// </summary>
-    public int IntervalSeconds { get; set; } = 300;
+    private int _intervalSeconds = 300;
+    public int IntervalSeconds
+    {
+        get => _intervalSeconds;
+        set => _intervalSeconds = value < 30 ? 30 : value;
+    }
 }
