@@ -68,10 +68,14 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // Register services
 builder.Services.AddScoped<ITransferService, TransferService>();
 
+// Bind payment gateway options from configuration
+builder.Services.Configure<StripeConfig>(builder.Configuration.GetSection("Stripe"));
+builder.Services.Configure<PayPalConfig>(builder.Configuration.GetSection("PayPal"));
+builder.Services.Configure<SouthAfricanBankConfig>(builder.Configuration.GetSection("SouthAfricanBank"));
+
 // Register payment gateways
 builder.Services.AddHttpClient<PayPalPaymentGateway>();
 builder.Services.AddScoped<StripePaymentGateway>();
-builder.Services.AddScoped<PayPalPaymentGateway>();
 builder.Services.AddScoped<SouthAfricanBankPaymentGateway>();
 builder.Services.AddScoped<IPaymentGatewayFactory, PaymentGatewayFactory>();
 
@@ -84,6 +88,7 @@ builder.Services.AddHostedService<GatewayDiagnosticsService>();
 
 // Register CQRS Command Handlers
 builder.Services.AddScoped<TransferMoneyCommandHandler>();
+builder.Services.AddScoped<EnhancedTransferMoneyCommandHandler>();
 builder.Services.AddScoped<CreateAccountCommandHandler>();
 builder.Services.AddScoped<CreateCustomerCommandHandler>();
 builder.Services.AddScoped<UpdateAccountCommandHandler>();

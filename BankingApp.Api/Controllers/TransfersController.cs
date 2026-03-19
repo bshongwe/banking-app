@@ -7,21 +7,15 @@ namespace BankingApp.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TransfersController : ControllerBase
+public class TransfersController(EnhancedTransferMoneyCommandHandler transferHandler) : ControllerBase
 {
-    private readonly TransferMoneyCommandHandler _transferHandler;
-
-    public TransfersController(TransferMoneyCommandHandler transferHandler)
-    {
-        _transferHandler = transferHandler;
-    }
-
     /// <summary>
     /// Transfer money from one account to another
     /// </summary>
     /// <remarks>
     /// This endpoint uses double-entry bookkeeping to ensure financial consistency.
     /// Each transfer creates two ledger entries: a debit on the source account and a credit on the destination account.
+    /// Specify "paymentGateway": "internal" (default), "stripe", "paypal", or "sa_banks".
     /// </remarks>
     [HttpPost]
     [Consumes("application/json")]
@@ -33,13 +27,20 @@ public class TransfersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> TransferMoney([FromBody] TransferMoneyCommand command)
     {
-        var transaction = await _transferHandler.HandleAsync(command);
-        return Ok(new 
-        { 
+        var result = await transferHandler.HandleAsync(command);
+        return Ok(new
+        {
             message = "Transfer completed successfully",
-            transactionId = transaction.Id,
-            reference = transaction.Reference,
-            createdAt = transaction.CreatedAt
+            transactionId = result.TransactionId,
+            reference = result.Reference,
+            status = result.Status,
+            amount = result.Amount,
+            currency = result.Currency,
+            paymentGateway = result.PaymentGateway,
+            externalTransactionId = result.ExternalTransactionId,
+            transferMethod = result.TransferMethod,
+            createdAt = result.CreatedAt,
+            estimatedCompletionTime = result.EstimatedCompletionTime
         });
     }
 }

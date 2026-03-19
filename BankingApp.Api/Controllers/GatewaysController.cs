@@ -45,7 +45,7 @@ public class GatewaysController(
         return Ok(new GatewayListDto
         {
             Gateways = statuses,
-            TotalAvailable = statuses.Count,
+            TotalAvailable = statuses.Count(g => g.IsConfigured),
             TotalConfigured = statuses.Count(g => g.IsConfigured),
             CheckedAt = checkedAt
         });

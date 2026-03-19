@@ -160,13 +160,19 @@ public class StripePaymentGateway : IPaymentGateway
                 return false;
             }
 
+            // Stripe SDK integration is pending (Stripe.net package not yet installed).
+            // Until ProcessPaymentAsync is fully implemented, report as unavailable
+            // even when a key is present to prevent false-positive health checks.
+            // Remove this block and uncomment the AccountService validation below
+            // once Stripe.net is integrated.
+            _logger.LogWarning("Stripe API key is present but SDK integration is not yet complete. Reporting as unavailable.");
+            return false;
+
             // Stripe configuration validation steps (pending Stripe.net package installation):
             //   Step 1: var service = new AccountService();
             //           var account = await service.GetAsync();
             //   Step 2: Verify account.ChargesEnabled && account.PayoutsEnabled
             //   Step 3: catch (StripeException ex) => log sanitized message and return false
-            _logger.LogInformation("Stripe API key is present. Full validation requires Stripe.net SDK integration.");
-            return true;
         }
         catch (Exception ex)
         {
