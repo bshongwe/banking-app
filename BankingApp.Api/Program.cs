@@ -1,6 +1,8 @@
 using BankingApp.Infrastructure.Data;
 using BankingApp.Infrastructure.Repositories;
+using BankingApp.Infrastructure.PaymentGateways;
 using BankingApp.Application.Services;
+using BankingApp.Application.Services.PaymentGateways;
 using BankingApp.Application.CQRS.CommandHandlers;
 using BankingApp.Application.CQRS.QueryHandlers;
 using BankingApp.Application.Validators;
@@ -64,6 +66,20 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Register services
 builder.Services.AddScoped<ITransferService, TransferService>();
+
+// Register payment gateways
+builder.Services.AddHttpClient<PayPalPaymentGateway>();
+builder.Services.AddScoped<StripePaymentGateway>();
+builder.Services.AddScoped<PayPalPaymentGateway>();
+builder.Services.AddScoped<SouthAfricanBankPaymentGateway>();
+builder.Services.AddScoped<IPaymentGatewayFactory, PaymentGatewayFactory>();
+
+// Register gateway diagnostics background service
+builder.Services.AddSingleton(new GatewayDiagnosticsOptions
+{
+    IntervalSeconds = builder.Configuration.GetValue("GatewayDiagnostics:IntervalSeconds", 300)
+});
+builder.Services.AddHostedService<GatewayDiagnosticsService>();
 
 // Register CQRS Command Handlers
 builder.Services.AddScoped<TransferMoneyCommandHandler>();
