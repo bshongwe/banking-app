@@ -7,14 +7,8 @@ namespace BankingApp.Api.Controllers;
 
 [ApiController]
 [Route("api/customers")]
-public class CustomerListController : ControllerBase
+public class CustomerListController(ListCustomersQueryHandler listCustomersHandler) : ControllerBase
 {
-    private readonly ListCustomersQueryHandler _listCustomersHandler;
-
-    public CustomerListController(ListCustomersQueryHandler listCustomersHandler)
-    {
-        _listCustomersHandler = listCustomersHandler;
-    }
 
     /// <summary>
     /// List all customers with pagination
@@ -34,7 +28,7 @@ public class CustomerListController : ControllerBase
             throw new ArgumentException("pageSize must be between 1 and 100");
 
         var query = new ListCustomersQuery { PageNumber = pageNumber, PageSize = pageSize };
-        var result = await _listCustomersHandler.HandleAsync(query);
+        var result = await listCustomersHandler.HandleAsync(query);
         return Ok(result);
     }
 }

@@ -7,14 +7,8 @@ namespace BankingApp.Api.Controllers;
 
 [ApiController]
 [Route("api/customers/{id}")]
-public class CustomerDetailController : ControllerBase
+public class CustomerDetailController(GetCustomerQueryHandler getCustomerHandler) : ControllerBase
 {
-    private readonly GetCustomerQueryHandler _getCustomerHandler;
-
-    public CustomerDetailController(GetCustomerQueryHandler getCustomerHandler)
-    {
-        _getCustomerHandler = getCustomerHandler;
-    }
 
     /// <summary>
     /// Get a customer by ID
@@ -26,7 +20,7 @@ public class CustomerDetailController : ControllerBase
     public async Task<IActionResult> GetCustomerById(Guid id)
     {
         var query = new GetCustomerQuery { CustomerId = id };
-        var customer = await _getCustomerHandler.HandleAsync(query);
+        var customer = await getCustomerHandler.HandleAsync(query);
         return Ok(customer);
     }
 }

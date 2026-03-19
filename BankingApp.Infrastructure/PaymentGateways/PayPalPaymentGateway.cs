@@ -14,7 +14,12 @@ public class PayPalPaymentGateway : IPaymentGateway
 
     private readonly PayPalConfig _config;
     private readonly ILogger<PayPalPaymentGateway> _logger;
+
+    // Reserved for PayPal REST API calls once PayPalCheckoutSdk implementation is complete.
+    // ReSharper disable once NotAccessedField.Local
+#pragma warning disable CS0414
     private readonly HttpClient _httpClient;
+#pragma warning restore CS0414
 
     public PayPalPaymentGateway(
         IOptions<PayPalConfig> config,

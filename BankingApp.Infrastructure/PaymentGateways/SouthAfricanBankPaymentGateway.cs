@@ -141,7 +141,7 @@ public class SouthAfricanBankPaymentGateway : IPaymentGateway
     /// <summary>
     /// Validates South African account number format
     /// </summary>
-    private bool ValidateAccountNumber(string accountNumber)
+    private static bool ValidateAccountNumber(string accountNumber)
     {
         if (string.IsNullOrWhiteSpace(accountNumber))
             return false;

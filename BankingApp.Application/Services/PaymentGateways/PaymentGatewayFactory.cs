@@ -30,20 +30,10 @@ public interface IPaymentGatewayFactory
 /// <summary>
 /// Default implementation of payment gateway factory
 /// </summary>
-public class PaymentGatewayFactory : IPaymentGatewayFactory
+public class PaymentGatewayFactory(
+    IServiceProvider serviceProvider,
+    ILogger<PaymentGatewayFactory> logger) : IPaymentGatewayFactory
 {
-    private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger<PaymentGatewayFactory> _logger;
-    private readonly Dictionary<string, Type> _registeredGateways;
-
-    public PaymentGatewayFactory(
-        IServiceProvider serviceProvider,
-        ILogger<PaymentGatewayFactory> logger)
-    {
-        _serviceProvider = serviceProvider;
-        _logger = logger;
-        _registeredGateways = new Dictionary<string, Type>();
-    }
 
     public IPaymentGateway GetGateway(string providerId)
     {
@@ -51,18 +41,18 @@ public class PaymentGatewayFactory : IPaymentGatewayFactory
         {
             var gateway = providerId.ToLower() switch
             {
-                "stripe" => (IPaymentGateway)_serviceProvider.GetRequiredService<StripePaymentGateway>(),
-                "paypal" => (IPaymentGateway)_serviceProvider.GetRequiredService<PayPalPaymentGateway>(),
-                "sa_banks" => (IPaymentGateway)_serviceProvider.GetRequiredService<SouthAfricanBankPaymentGateway>(),
+                "stripe" => (IPaymentGateway)serviceProvider.GetRequiredService<StripePaymentGateway>(),
+                "paypal" => (IPaymentGateway)serviceProvider.GetRequiredService<PayPalPaymentGateway>(),
+                "sa_banks" => (IPaymentGateway)serviceProvider.GetRequiredService<SouthAfricanBankPaymentGateway>(),
                 _ => throw new KeyNotFoundException($"Payment gateway '{providerId}' not found")
             };
 
-            _logger.LogInformation("Retrieved payment gateway: {ProviderId}", providerId);
+            logger.LogInformation("Retrieved payment gateway: {ProviderId}", providerId);
             return gateway;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to retrieve payment gateway: {ProviderId}", providerId);
+            logger.LogError(ex, "Failed to retrieve payment gateway: {ProviderId}", providerId);
             throw;
         }
     }
@@ -73,24 +63,24 @@ public class PaymentGatewayFactory : IPaymentGatewayFactory
         {
             var gateways = new List<IPaymentGateway>
             {
-                _serviceProvider.GetRequiredService<StripePaymentGateway>(),
-                _serviceProvider.GetRequiredService<PayPalPaymentGateway>(),
-                _serviceProvider.GetRequiredService<SouthAfricanBankPaymentGateway>()
+                serviceProvider.GetRequiredService<StripePaymentGateway>(),
+                serviceProvider.GetRequiredService<PayPalPaymentGateway>(),
+                serviceProvider.GetRequiredService<SouthAfricanBankPaymentGateway>()
             };
 
-            _logger.LogInformation("Retrieved {Count} payment gateways", gateways.Count);
+            logger.LogInformation("Retrieved {Count} payment gateways", gateways.Count);
             return gateways;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to retrieve all payment gateways");
+            logger.LogError(ex, "Failed to retrieve all payment gateways");
             throw;
         }
     }
 
     public async Task<IPaymentGateway> SelectOptimalGatewayAsync(PaymentRequest request)
     {
-        _logger.LogInformation("Selecting optimal payment gateway for {Amount} {Currency}", 
+        logger.LogInformation("Selecting optimal payment gateway for {Amount} {Currency}", 
             request.Amount, request.Currency);
 
         var gateways = GetAllGateways().ToList();
@@ -101,7 +91,7 @@ public class PaymentGatewayFactory : IPaymentGatewayFactory
             {
                 if (SupportsRequest(gateway, request))
                 {
-                    _logger.LogInformation("Selected gateway: {ProviderId}", gateway.ProviderId);
+                    logger.LogInformation("Selected gateway: {ProviderId}", gateway.ProviderId);
                     return gateway;
                 }
             }
@@ -126,19 +116,19 @@ public class PaymentGatewayFactory : IPaymentGatewayFactory
 
     private bool IsSupportedByStripe(PaymentRequest request)
     {
-        var config = _serviceProvider.GetRequiredService<IOptions<StripeConfig>>();
+        var config = serviceProvider.GetRequiredService<IOptions<StripeConfig>>();
         return config.Value.SupportedCurrencies.Contains(request.Currency.ToUpper());
     }
 
     private bool IsSupportedByPayPal(PaymentRequest request)
     {
-        var config = _serviceProvider.GetRequiredService<IOptions<PayPalConfig>>();
+        var config = serviceProvider.GetRequiredService<IOptions<PayPalConfig>>();
         return config.Value.SupportedCurrencies.Contains(request.Currency.ToUpper());
     }
 
     private bool IsSupportedBySouthAfricanBanks(PaymentRequest request)
     {
-        var config = _serviceProvider.GetRequiredService<IOptions<SouthAfricanBankConfig>>();
+        var config = serviceProvider.GetRequiredService<IOptions<SouthAfricanBankConfig>>();
         return config.Value.SupportedCurrencies.Contains(request.Currency.ToUpper());
     }
 }
