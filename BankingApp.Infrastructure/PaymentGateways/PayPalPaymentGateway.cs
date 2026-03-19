@@ -38,7 +38,21 @@ public class PayPalPaymentGateway : IPaymentGateway
             _logger.LogInformation("Processing PayPal payment. Reference: {Reference}, Amount: {Amount}",
                 request.Reference, request.Amount);
 
-            // Implementation using PayPalCheckoutSdk NuGet package:
+            // Validate configuration before attempting payment
+            if (string.IsNullOrWhiteSpace(_config.ClientId) || string.IsNullOrWhiteSpace(_config.ClientSecret))
+            {
+                _logger.LogWarning("PayPal credentials not configured. Using simulated payment for reference: {Reference}", request.Reference);
+                return new PaymentResult
+                {
+                    Success = true,
+                    TransactionId = $"paypal_sim_{Guid.NewGuid()}",
+                    Status = "SIMULATED",
+                    Amount = request.Amount,
+                    ProcessedAt = DateTime.UtcNow
+                };
+            }
+
+            // PayPal SDK integration steps (pending PayPalCheckoutSdk package installation):
             // dotnet add package PayPalCheckoutSdk
             
             // Create payment request:
@@ -58,24 +72,19 @@ public class PayPalPaymentGateway : IPaymentGateway
             //         }
             //     }
             // };
-
-            return new PaymentResult
-            {
-                Success = true,
-                TransactionId = $"paypal_{Guid.NewGuid()}",
-                Status = "COMPLETED",
-                Amount = request.Amount,
-                ProcessedAt = DateTime.UtcNow
-            };
+            throw new NotImplementedException(
+                "PayPal SDK integration is not yet complete. " +
+                "Install PayPalCheckoutSdk package before enabling live payments.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "PayPal payment processing failed for reference: {Reference}", request.Reference);
+            var safeMessage = ex.Message.ReplaceLineEndings(" ");
+            _logger.LogError(ex, "PayPal payment processing failed for reference: {Reference}. Error: {ErrorMessage}", request.Reference, safeMessage);
             return new PaymentResult
             {
                 Success = false,
                 Status = "FAILED",
-                ErrorMessage = ex.Message,
+                ErrorMessage = "Payment processing failed. Please try again.",
                 ErrorCode = "PAYPAL_ERROR"
             };
         }
